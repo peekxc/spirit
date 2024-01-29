@@ -125,7 +125,7 @@ struct ripser {
 
 		diameter_entry_t next() {
 			std::cout << "here 1" << std::endl; 
-			j = parent.get_max_vertex(idx_below, k + 1, j);
+			j = parent.get_max_vertex(idx_below, k + 1, j) - 1;
 
 			std::cout << "here 2: " << idx_above << ", " << binomial_coeff(j, k + 1) << ", " << idx_below << std::endl; 
 			index_t face_index = idx_above - binomial_coeff(j, k + 1) + idx_below;
