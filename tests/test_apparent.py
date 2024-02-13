@@ -80,18 +80,62 @@ def test_paper_example2():
     assert np.allclose(np.ravel(t_verts), np.array([0,2,3,1,2,3]))
 
 def test_apparent_facet():
+  from scipy.spatial.distance import pdist
   from spirit.apparent_pairs import clique_mod
+  X = np.random.uniform(size=(10,2))
   M = clique_mod.MetricSpace(10,2)
   r = comb_to_rank([8,5,3], order='colex', n = 10)
-  M.boundary(r, 2, 10)
+  M.weights = pdist(X)
+  # M.boundary(r, 2)
+  # M.coboundary(r, 2)
+  assert np.isclose(M.simplex_weight(r, 2), np.max(pdist(X[[3,5,8]])))
 
-  M.apparent_facet()
+  M.apparent_facet(r, 2)
+  M.simplex_weight(33,1)
+  assert np.all(rank_to_comb([33], n=M.n, k=2, order='colex') == np.array([5,8]))
+
+  from itertools import combinations
+  edges = np.array([comb_to_rank(c, k=2, order='colex', n=M.n) for c in combinations(range(M.n), 2)])
+  triangles = np.array([comb_to_rank(c, k=3, order='colex', n=M.n) for c in combinations(range(M.n), 3)])
+  
+  facet_ranks = np.array([M.apparent_facet(r, 2) for r in triangles])
+  cofacet_ranks = np.array([M.apparent_cofacet(e,1) for e in edges])
+
+  for tr in triangles: 
+    facet_ranks[triangles == 84]
+    edges[cofacet_ranks == 84]
+
   pass
 
+def test_apparent_pairs():
+  f_vals = np.array([0,0,0,0,3,3,4,4,5,5,5,5,5,5,5])
+  s_vals = [[3],[2],[1],[0],[3,2],[1,0],[3,1],[2,0],[3,0],[2,1],[3,2,1],[3,2,0],[3,1,0],[2,1,0],[3,2,1,0]]
+  K = sx.RankFiltration(zip(f_vals, s_vals))
+  K.order = 'reverse colex'
+  
+  from spirit.apparent_pairs import clique_mod
+  M = clique_mod.MetricSpace(sx.card(K, 0), 3)
+  M.weights = np.array([3,4,5,5,4,3])
+  # M.simplex_weight(r, 2)
 
+  er = comb_to_rank(sx.faces(K,1), order='colex', n=sx.card(K,0))
+  tr = comb_to_rank(sx.faces(K,2), order='colex', n=sx.card(K,0))
+  qr = comb_to_rank(sx.faces(K,3), order='colex', n=sx.card(K,0))
 
+  #zero_er = np.array([M.zero_facet(r, 2) for r in tr])
+  #zero_tr = np.array([M.zero_cofacet(r, 1) for r in er])
 
+  # [M.apparent_zero_facet(r, 2) for r in tr]
+  ## Ensure we can deflate the nullspace using apparent pairs
+  ap_tr = np.array([M.apparent_zero_cofacet(r, 1) for r in er])
+  D1 = sx.boundary_matrix(K, 1).todense()
+  D1_rank = np.linalg.matrix_rank(D1)
+  assert np.linalg.matrix_rank(D1[:,ap_tr == -1]) == D1_rank
 
+  ap_tr = np.array([M.apparent_zero_cofacet(r, 2) for r in tr])
+  D2 = sx.boundary_matrix(K, 2).todense()
+  D2_rank = np.linalg.matrix_rank(D2)
+  assert np.linalg.matrix_rank(D2[:,ap_tr == -1]) == D2_rank
 
 def test_med_rips():
   X = np.random.uniform(size=(20, 2))
@@ -110,6 +154,8 @@ def test_med_rips():
   RM.apparent_facets(t_ranks, t_diams, 2)
 
   RM._apparent_cofacet(t_ranks[1], t_diams[1], 2)
+
+
 
 
 def test_apparent_facet():

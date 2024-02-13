@@ -37,6 +37,7 @@ _cpp_args = compiler.get_supported_arguments(
   '-fvisibility=hidden',
   '-Wno-deprecated-anon-enum-enum-conversion'
 )
+_cpp_args += compiler.get_supported_arguments('-std=c++20')
 
 ## Include directories
 incdir_numpy = run_command(py, ['-c', 'import os; os.chdir(".."); import numpy; print(numpy.get_include())'], check : true).stdout().strip()
@@ -47,6 +48,7 @@ includes += include_directories('include')
 includes += include_directories('src' / pkg_name)
 includes += include_directories(incdir_numpy)
 includes += include_directories(incdir_pybind11)
+includes += include_directories('extern' / 'eigen')
 
 fs = import('fs')
 if fs.is_dir('extern')
