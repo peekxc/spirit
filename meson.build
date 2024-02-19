@@ -42,12 +42,14 @@ _cpp_args += compiler.get_supported_arguments('-std=c++20')
 ## Include directories
 incdir_numpy = run_command(py, ['-c', 'import os; os.chdir(".."); import numpy; print(numpy.get_include())'], check : true).stdout().strip()
 incdir_pybind11 = run_command(py, ['-c', 'import os; os.chdir(".."); import pybind11; print(pybind11.get_include())'], check : true).stdout().strip()
+incdir_combin = run_command(py, ['-c', 'import os; os.chdir(".."); import combin; print(combin.get_include())'], check : true).stdout().strip()
 
 ## Header includes
 includes += include_directories('include')
 includes += include_directories('src' / pkg_name)
 includes += include_directories(incdir_numpy)
 includes += include_directories(incdir_pybind11)
+includes += include_directories(incdir_combin)
 includes += include_directories('extern' / 'eigen')
 
 fs = import('fs')

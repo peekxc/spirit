@@ -47,7 +47,7 @@ pivot_rows_D2 = ap_co_1 != -1
 
 # %% 
 from scipy.sparse.linalg import eigsh
-from spirit.apparent_pairs import SpectralRI, deflate_sparse
+from spirit.apparent_pairs import SpectralRI, deflate_sparse, UpLaplacian
 
 ## Initialize 
 L = SpectralRI(K, p=2)
@@ -73,7 +73,7 @@ sum(L.weights[1] != 0)
 sum(L.weights[2] != 0)
 
 ## The above should match this
-L.lower_left(i = i, j = j, p = 1)
+L.lower_left(i = i, j = j, p = 2)
 
 ## Deflate zeroes
 D2_rank = np.linalg.matrix_rank(L._D[2].todense())
@@ -104,6 +104,19 @@ np.sum(F.D() != 0)
 
 cholesky(csc_array(np.eye(5)))
 
+cholesky(L.lower_left(i = i, j = j, p = 2, deflate=True, apparent=True).as_sparse())
+
+## Test 
+L.detect_pivots(pdist(X), p = 2, f_type = "flag")
+L.lower_left(i = i, j = j, p = 2, deflate=False).as_sparse()
+L.lower_left(i = i, j = j, p = 2, deflate=True).as_sparse()
+L.lower_left(i = i, j = j, p = 2, deflate=True, apparent=True).as_sparse()
+
+
+LA = L.lower_left(i = i, j = j, p = 2, deflate=True, apparent=True)
+LA.D = LA.D.tocsc()
+F = cholesky(LA.as_sparse().tocsc())
+
 
 # %% 
 from bokeh.io import output_notebook
@@ -118,13 +131,14 @@ show(figure_dgm(dgms[1]))
 ## Select a quadrant
 a,b,c,d = 0.10, 0.25, 1.5, 1.9
 ranks = [0]*4
+
+L = SpectralRI(K, p = 2)
+L._weights[0] = np.repeat(1e-8, sx.card(K,0))
+L._weights[1] = diam_f(sx.faces(K,1))
+L._weights[2] = diam_f(sx.faces(K,2))
 for cc, (i,j) in enumerate([(b,c), (a,c), (b,d), (a,d)]):
-  L.reset()
-  L._weights[0] = np.repeat(1e-8, sx.card(K,0))
-  L._weights[1] = diam_f(sx.faces(K,1))
-  L._weights[2] = diam_f(sx.faces(K,2))
-  L.lower_left(i,j,p=1)
-  ranks[cc] = np.linalg.matrix_rank(L._D[2].todense())
+  L1 = L.lower_left(i,j,p=2)
+  ranks[cc] = np.linalg.matrix_rank(L1 @ np.eye(L1.shape[0]))
   print(f"{L.D[2].shape}")
   print(f"rank: {ranks[cc]}")
 
@@ -147,7 +161,6 @@ for cc, (i,j) in enumerate([(b,c), (a,c), (b,d), (a,d)]):
 
 sum(np.where(diam_f(sx.faces(K,2)) <= j, 1, 0))
 
-## Unfortunately, ground truth makes no sense as ii can't be 0! 
 print("TRUTH")
 L = SpectralRI(K, p=2)
 for cc, (i,j) in enumerate([(b,c), (a,c), (b,d), (a,d)]):
@@ -185,16 +198,32 @@ L._weights[0] = np.repeat(1e-8, sx.card(K,0))
 L._weights[1] = diam_f(sx.faces(K,1))
 L._weights[2] = diam_f(sx.faces(K,2))
 for cc, (i,j) in enumerate([(b,c), (a,c), (b,d), (a,d)]):
-  L.lower_left(i = i, j = j, p = 1)
-  print(rank_cholmod(L.D[2].tocsc()))
+  L1 = L.lower_left(i = i, j = j, p = 2)
+  L.rank(i=i,j=j,p=2)
+  np.linalg.matrix_rank(L1 @ np.eye(L1.shape[0]))
+  #print(rank_cholmod(L.D[2].tocsc()))
 
-D2 = L.D[2].astype(np.float32)
-from primate.diagonalize import lanczos
+from primate.functional import numrank
+
+
+rank_cholmod(L1.D.tocsc())
+
+## Rank 
+L.rank(i,j,p=2)
+
+
 import timeit
+from primate.functional import numrank
+from primate.diagonalize import lanczos
+D2 = L1.D.tocsc().astype(np.float32)
 timeit.timeit(lambda: numrank(D2 @ D2.T, seed=1), number = 30) / 30
 
-for i in range(100):
-  numrank(D2 @ D2.T, seed=26, maxiter=2, deg=30, orth=25, ncv=30, verbose=True, num_threads=1)
+numrank(D2 @ D2.T, seed=26, maxiter=10, deg=300, orth=25, ncv=30, verbose=True, num_threads=1)
+
+# eigsh(D2 @ D2.T, k=1, which='SM')
+hutch(D2 @ D2.T, fun="smoothstep", a=0, b=gap, atol=0.45, maxiter=1500, deg=5, orth=0, ncv=5, verbose=True)
+np.linalg.matrix_rank((D2 @ D2.T) @ np.eye(D2.shape[0]))
+
 
 ## 
 L.rank(i,j,p=2)
