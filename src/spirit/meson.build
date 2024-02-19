@@ -1,5 +1,5 @@
 ## Extension modules
-extensions = [ '_ripser', '_clique']
+extensions = ['_clique']
 foreach ext: extensions
   py.extension_module(
     ext,

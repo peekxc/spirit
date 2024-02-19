@@ -1,6 +1,6 @@
 [build-system]
 build-backend = 'mesonpy'
-requires = ['meson-python', 'wheel', 'ninja', 'numpy', 'pybind11']
+requires = ['meson-python', 'wheel', 'ninja', 'numpy', 'pybind11', 'combin']
 
 [project]
 name = "spirit"
@@ -17,7 +17,8 @@ authors = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-  "numpy"
+  "numpy", 
+	"combin"
 ]
 license = {file = "LICENSE"}
 include = [

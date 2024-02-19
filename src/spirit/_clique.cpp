@@ -1,4 +1,3 @@
-#include "combin/include/combinatorial.h"
 #include <vector> 
 #include <cinttypes> 
 #include <iostream>
@@ -12,6 +11,7 @@
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
+#include <combin/combinatorial.h>
 
 using index_t = std::int64_t;
 using combinatorial::BinomialCoefficientTable;
