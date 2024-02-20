@@ -135,21 +135,21 @@ struct MetricFilter {
 };
 
 
-
+using combinatorial::BC; // use pre-allocated BC table
 
 template< SimplexIndexer Indexer > 
 struct Cliqueser {
   const size_t n; 
   Indexer filter; 
-
-  Cliqueser(const size_t _n, const size_t max_dim = 2) : n(_n), filter(_n), BC() {
+  
+  Cliqueser(const size_t _n, const size_t max_dim = 2) : n(_n), filter(_n) {
     BC.precompute(n, max_dim+2);
   }
 
   // Given simplex rank + its dimension, retrieve its max weight
   auto simplex_weight(const index_t simplex, const index_t dim) const -> float {
     vertices[15] = simplex; 
-    unrank_colex(vertices.rbegin(), vertices.rbegin()+1, n, dim + 1, vertices.begin());
+    unrank_colex< false >(vertices.rbegin(), vertices.rbegin()+1, n, dim + 1, vertices.begin());
     return filter.simplex_index(vertices.data(), vertices.data() + dim + 1);
   }
 
@@ -163,12 +163,12 @@ struct Cliqueser {
     bool cont_enum = true;
     while (j >= k && cont_enum){
       // std::cout << "j = " << j << ", k = " << k << std::endl;
-      while ((BC.at(j,k) <= idx_below)) {
+      while ((static_cast< index_t >(BC.at(j,k)) <= idx_below)) {
         idx_below -= BC.at(j, k);
         idx_above += BC.at(j, k + 1);
         --j;
         --k;
-        assert(k != -1);
+        //assert(k != -1);
       }
       index_t cofacet_index = idx_above + BC.at(j--, k + 1) + idx_below;
       cont_enum = f(cofacet_index);
@@ -183,7 +183,7 @@ struct Cliqueser {
     index_t j = n - 1;
     bool cont_enum = true; 
     for (index_t k = dim; k >= 0 && cont_enum; --k){
-      j = combinatorial::get_max_vertex< true >(idx_below, k + 1, j) - 1;
+      j = combinatorial::get_max_vertex< false >(idx_below, k + 1, j) - 1; // NOTE: Danger!
       index_t c = BC.at(j, k + 1);
       index_t face_index = idx_above - c + idx_below;
       idx_below -= c;
@@ -208,7 +208,7 @@ struct Cliqueser {
   }
 
   auto lex_minimal_facet(index_t cns_rank, size_t dim) const -> index_t {
-    auto j = combinatorial::get_max_vertex< true >(cns_rank, dim + 1, n - 1) - 1;
+    auto j = combinatorial::get_max_vertex< false >(cns_rank, dim + 1, n - 1) - 1; // danger! 
     return BC.at(j, dim + 1) + cns_rank;
   }
 
@@ -218,7 +218,7 @@ struct Cliqueser {
 		index_t j = n - 1;
 		index_t k = dim + 1;
     while (j >= k){
-      while ((BC.at(j,k) <= idx_below)) {
+      while ((static_cast< index_t >(BC.at(j,k)) <= idx_below)) {
         idx_below -= BC.at(j, k);
         idx_above += BC.at(j, k + 1);
         --j;
@@ -262,7 +262,7 @@ struct Cliqueser {
 
   private: 
     mutable std::array< index_t, 16 > vertices; 
-    mutable BinomialCoefficientTable< 0, 0, index_t > BC; 
+    // mutable BinomialCoefficientTable< 0, 0, index_t > BC; 
 };
 
 #include <pybind11/pybind11.h>
@@ -313,6 +313,21 @@ void _clique_wrapper(py::module& m, std::string suffix, Lambda&& init){
     .def("zero_cofacet", &FT::zero_cofacet)
     .def("apparent_zero_facet", &FT::apparent_zero_facet)
     .def("apparent_zero_cofacet", &FT::apparent_zero_cofacet)
+    // .def("apparent_zero_facets", [](){
+
+    // })
+    .def("apparent_zero_cofacets", [](const FT& M, const py_array< index_t >& cns_ranks, const size_t dim) -> py_array< index_t >{
+      
+      const size_t nr = static_cast< const size_t >(cns_ranks.size());
+      auto ap = std::vector< index_t >();
+      ap.reserve(nr);
+      const index_t* r = cns_ranks.data(); 
+      for (size_t i = 0; i < nr; ++i){
+        ap.push_back(M.apparent_zero_cofacet(r[i], dim));
+      }
+      auto ap_out = py_array< index_t >(nr, ap.data());
+      return ap_out; 
+    })
     ;
 }
 
@@ -339,4 +354,39 @@ PYBIND11_MODULE(_clique, m) {
     C.filter.d = d;
     C.filter.points = std::move(point_cloud);
   });
+
+  m.def("compress_coo", [](
+    const py_array< int >& p_inc, const py_array< int >& q_inc, 
+    const py_array< int >& r_ind, 
+    const py_array< int >& c_ind,
+    const py_array< float >& data
+  ) -> py::tuple {
+    const int* p_inc_ptr = p_inc.data();
+    const int* q_inc_ptr = q_inc.data();
+    const int* r_ptr = r_ind.data();
+    const int* c_ptr = c_ind.data();
+    const float* d_ptr = data.data();
+    const size_t np = std::accumulate(p_inc_ptr, p_inc_ptr + p_inc.size(), 0);
+    const size_t nq = std::accumulate(q_inc_ptr, q_inc_ptr + q_inc.size(), 0);
+    auto r_out = std::vector< int >();
+    auto c_out = std::vector< int >();
+    auto d_out = std::vector< float >();
+    r_out.reserve(np*3);
+    c_out.reserve(nq*3);
+    const size_t n_entries = static_cast< const size_t >(data.size());
+
+    for (size_t i = 0; i < n_entries; ++i){
+      if (p_inc_ptr[r_ptr[i]] & q_inc_ptr[c_ptr[i]]){
+        r_out.push_back(r_ptr[i]);
+        c_out.push_back(c_ptr[i]);
+        d_out.push_back(d_ptr[i]);
+      }
+    }
+    py_array< int > r_out_(r_out.size(), r_out.data());
+    py_array< int > c_out_(c_out.size(), c_out.data());
+    py_array< float > d_out_(d_out.size(), d_out.data());
+    return py::make_tuple(d_out_, py::make_tuple(r_out_, c_out_));
+    // return py::make_tuple(py::cast(r_out), py::cast(c_out), py::cast(d_out));
+  });
+
 }

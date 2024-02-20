@@ -30,59 +30,121 @@ from pbsig.color import bin_color
 N, M = 120, 24 # num of points, dimension 
 X_delay = SW(n=N, d=M, L=6) ## should be the perfect period
 
-pt_color = (bin_color(np.arange(len(X_delay)), "turbo")*255).astype(np.uint8)
+pt_color = (bin_color(np.arange(N), "turbo")*255).astype(np.uint8)
 p = figure(width=250, height=250, match_aspect=True)
-p.scatter(*pca(X_delay).T, color=pt_color)
+p.scatter(*pca(X_delay, center=True).T, color=pt_color)
 show(p)
 
 # %% Use ripser to infer range of [b, d]
 from ripser import ripser
 from persim import plot_diagrams
 diagrams = ripser(SW(n=N, d=M, L=6))['dgms']
-lifetimes = np.diff(diagrams[1], axis=1).flatten()
-h1_bd = diagrams[1][np.argmax(lifetimes),:]
-print(f"Most persistent H1 cycle: { h1_bd }")
-birth, death = h1_bd[0]*1.20, h1_bd[1]*0.20
 plot_diagrams(diagrams, show=False)
 
 # %% Evaluate spectral rank invariant on full complex 
 from itertools import combinations
-S = sx.RankComplex([[i] for i in np.arange(N)])
-S.add(np.array(list(combinations(np.ravel(sx.faces(S,0)), 2))))
-S.add(np.array(list(combinations(np.ravel(sx.faces(S,0)), 3))))
+X = SW(n=N, d=M, L=6)
+S = sx.rips_complex(X, p=2)
 
+from line_profiler import LineProfiler
+profile = LineProfiler()
+profile.add_function(SpectralRI)
+profile.add_function(SpectralRI.__init__)
+profile.enable_by_count()
+SI = SpectralRI(S)
+profile.print_stats()
+
+
+profile = LineProfiler()
+profile.add_function(SI.detect_pivots)
+profile.enable_by_count()
+SI.detect_pivots(dX, p=2, f_type="flag")
+profile.print_stats()
+
+# %% 
 from spirit.apparent_pairs import SpectralRI, deflate_sparse, UpLaplacian
 SI = SpectralRI(S)
-X = SW(n=N, d=M, L=6)
 dX = pdist(X)
 
 ## Start with an embedding + diameter filter 
+from combin import rank_to_comb
 diam_f = sx.flag_filter(dX)
 SI._weights[0] = np.repeat(1e-8, sx.card(S,0))
-SI._weights[1] = diam_f(sx.faces(S, 1))
-SI._weights[2] = diam_f(sx.faces(S, 2))
+SI._weights[1] = diam_f(rank_to_comb(SI.simplices[1], k=2, order='colex', n=sx.card(S,0)))
+SI._weights[2] = diam_f(rank_to_comb(SI.simplices[2], k=3, order='colex', n=sx.card(S,0)))
 SI.detect_pivots(dX, p=1, f_type="flag")
 SI.detect_pivots(dX, p=2, f_type="flag")
 
 # %%
-a,b,c,d = h1_bd[0]*0.80, h1_bd[0]*1.20, h1_bd[1]*0.80, h1_bd[1]*1.20
-SI.query(2,a,b,c,d, summands=True, method="cholesky")
-# 1099 - 1103 - 5857 + 5862
+# a,b,c,d = h1_bd[0]*0.80, h1_bd[0]*1.20, h1_bd[1]*0.80, h1_bd[1]*1.20 # 1099 - 1103 - 5857 + 5862
+a,b,c,d = 0.50, 2.0, 6.0, 8.0
+SI.query(1,a,b,c,d, summands=True, method="cholesky")
+# 977, 1225, 5369, 5618
+
+
+# %% Vary the step size 
+from pbsig.persistence import sw_parameters
+_, tau_ub = sw_parameters(bounds = (0, 12 * np.pi), d=M, L=2)
+_, tau_lb = sw_parameters(bounds = (0, 12 * np.pi), d=M, L=12)
+M_opt, tau_opt = sw_parameters(bounds = (0, 12 * np.pi), d=M, L=6)
+
+for tau in np.linspace(tau_lb, tau_ub, 10):
+  X = SW(n=N, d=M, tau=tau)
+  dX = pdist(X)
+  diam_f = sx.flag_filter(dX)
+  SI._weights[0] = np.repeat(1e-8, sx.card(S,0))
+  SI._weights[1] = diam_f(rank_to_comb(SI.simplices[1], k=2, order='colex', n=sx.card(S,0)))
+  SI._weights[2] = diam_f(rank_to_comb(SI.simplices[2], k=3, order='colex', n=sx.card(S,0)))
+  SI._status[2].fill(0)
+  SI.detect_pivots(dX, p=2, f_type="flag")
+  print(f"Step size: {tau:.4f}, Multiplicity: {SI.query(1,a,b,c,d, summands=False, method='cholesky')}")
+
+
+# timeit.timeit(lambda: SI.query(1,b,c,summands=True, method='cholesky'), number=10)
+# timeit.timeit(lambda: SI.query(1,a,b,c,d,summands=True, method='cholesky'), number=10)
+
+# %% 
+from pbsig.vis import figure_dgm, show, Range1d
+diagrams = ripser(SW(n=N, d=M, tau=0.6716))['dgms']
+p = figure_dgm(diagrams[1])
+p.rect(x=a + (b-a)/2, y=c + (d-c)/2, width=b-a,height=d-c, fill_alpha=0)
+p.y_range = Range1d(0, 9)
+p.x_range = Range1d(0, 9)
+show(p)
+
 
 # %% 
 import timeit
 timeit.timeit(lambda: ripser(X), number=10)
-timeit.timeit(lambda: SI.query(2,a,b,c,d, summands=True, method="cholesky"), number=10)
+timeit.timeit(lambda: SI.query(1,a,b,c,d, summands=True, method="cholesky"), number=10)
+timeit.timeit(lambda: SI.query(1,b,c, summands=True, method="cholesky"), number=10)
+timeit.timeit(lambda: SI.detect_pivots(dX, p=2, f_type="flag"), number=1)
 
+
+from spirit.apparent_pairs import compress_index, deflate_sparse
 from line_profiler import LineProfiler
 profile = LineProfiler()
 profile.add_function(SI.query)
 profile.add_function(SI.rank)
 profile.add_function(SI.lower_left)
 profile.add_function(deflate_sparse)
+profile.add_function(compress_index)
 profile.enable_by_count()
 SI.query(2,a,b,c,d, summands=True, method="cholesky")
 profile.print_stats()
+
+from line_profiler import LineProfiler
+profile = LineProfiler()
+profile.add_function(SI.detect_pivots)
+profile.enable_by_count()
+SI.detect_pivots(dX, p=2, f_type="flag")
+profile.print_stats()
+
+# %% Test coo deflation 
+## Expand = False is about 10% faster, should use less memory
+import timeit
+timeit.timeit(lambda: SI.lower_left(b,c, p = 2, deflate=True, apparent=True, expand=True), number=200)
+timeit.timeit(lambda: SI.lower_left(b,c, p = 2, deflate=True, apparent=True, expand=False), number=200)
 
 
 
