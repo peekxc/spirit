@@ -45,8 +45,8 @@ incdir_pybind11 = run_command(py, ['-c', 'import os; os.chdir(".."); import pybi
 incdir_combin = run_command(py, ['-c', 'import os; os.chdir(".."); import combin; print(combin.get_include())'], check : true).stdout().strip()
 
 ## Header includes
-includes += include_directories('include')
 includes += include_directories('src' / pkg_name)
+includes += include_directories('src' / pkg_name / 'include')
 includes += include_directories(incdir_numpy)
 includes += include_directories(incdir_pybind11)
 includes += include_directories(incdir_combin)
