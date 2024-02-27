@@ -19,9 +19,15 @@ f = lambda t: np.cos(t) + np.cos(3*t)
 SW = sliding_window(f, bounds=(0, 12*np.pi))
 
 # %% Plot periodic function
+from pbsig.persistence import sw_parameters
+
+_, tau_opt = sw_parameters(bounds=(0, 12*np.pi), d=24, L=6)
 dom = np.linspace(0, 12*np.pi, 1200)
+w = tau_opt * 24
+
 p = figure(width=450, height=225)
 p.line(dom, f(dom))
+p.rect(x=w/2, y=0, width=w, height=4, fill_alpha=0.20, fill_color='gray', line_alpha=0, line_width=0)
 show(p)
 
 # %% Make a slidding window embedding
@@ -42,27 +48,25 @@ diagrams = ripser(SW(n=N, d=M, L=6))['dgms']
 plot_diagrams(diagrams, show=False)
 
 # %% Evaluate spectral rank invariant on full complex 
-from itertools import combinations
 X = SW(n=N, d=M, L=6)
 S = sx.rips_complex(X, p=2)
 
-from line_profiler import LineProfiler
-profile = LineProfiler()
-profile.add_function(SpectralRI)
-profile.add_function(SpectralRI.__init__)
-profile.enable_by_count()
-SI = SpectralRI(S)
-profile.print_stats()
+# from line_profiler import LineProfiler
+# profile = LineProfiler()
+# profile.add_function(SpectralRI)
+# profile.add_function(SpectralRI.__init__)
+# profile.enable_by_count()
+# SI = SpectralRI(S)
+# profile.print_stats()
 
-
-profile = LineProfiler()
-profile.add_function(SI.detect_pivots)
-profile.enable_by_count()
-SI.detect_pivots(dX, p=2, f_type="flag")
-profile.print_stats()
+# profile = LineProfiler()
+# profile.add_function(SI.detect_pivots)
+# profile.enable_by_count()
+# SI.detect_pivots(dX, p=2, f_type="flag")
+# profile.print_stats(output_unit=1e-3)
 
 # %% 
-from spirit.apparent_pairs import SpectralRI, deflate_sparse, UpLaplacian
+from spirit.apparent_pairs import SpectralRI
 SI = SpectralRI(S)
 dX = pdist(X)
 
@@ -70,8 +74,8 @@ dX = pdist(X)
 from combin import rank_to_comb
 diam_f = sx.flag_filter(dX)
 SI._weights[0] = np.repeat(1e-8, sx.card(S,0))
-SI._weights[1] = diam_f(rank_to_comb(SI.simplices[1], k=2, order='colex', n=sx.card(S,0)))
-SI._weights[2] = diam_f(rank_to_comb(SI.simplices[2], k=3, order='colex', n=sx.card(S,0)))
+SI._weights[1] = diam_f(rank_to_comb(SI._simplices[1], k=2, order='colex', n=sx.card(S,0)))
+SI._weights[2] = diam_f(rank_to_comb(SI._simplices[2], k=3, order='colex', n=sx.card(S,0)))
 SI.detect_pivots(dX, p=1, f_type="flag")
 SI.detect_pivots(dX, p=2, f_type="flag")
 
@@ -80,6 +84,16 @@ SI.detect_pivots(dX, p=2, f_type="flag")
 a,b,c,d = 0.50, 2.0, 6.0, 8.0
 SI.query(1,a,b,c,d, summands=True, method="cholesky")
 # 977, 1225, 5369, 5618
+# SI.query_spectral(1,a,b,c,d, summands=True, method="")
+
+
+
+
+## Query testing
+# SI.query_spectral(1,a,b,c,d,fun="numrank",summands=True, method="trace", verbose=False)
+# SI.query_spectral(1,a,b,c,d,fun=lambda x: np.exp(-np.abs(x)),summands=True, method="trace", verbose=True, deg=5, quad="fttr")
+# SI.query_spectral(1,a,b,c,d,fun="numrank",summands=True, method="trace", verbose=False, maxiter=20, deg=5, quad="fttr")
+# SI.query_spectral(1,a,b,c,d,fun=lambda x: x / (x + 1e-2),summands=True, method="trace", verbose=False, maxiter=20, deg=5, quad="fttr")
 
 
 # %% Vary the step size 
@@ -88,17 +102,86 @@ _, tau_ub = sw_parameters(bounds = (0, 12 * np.pi), d=M, L=2)
 _, tau_lb = sw_parameters(bounds = (0, 12 * np.pi), d=M, L=12)
 M_opt, tau_opt = sw_parameters(bounds = (0, 12 * np.pi), d=M, L=6)
 
-for tau in np.linspace(tau_lb, tau_ub, 10):
+tik_sums, tik_ranks = [], []
+for ii, tau in enumerate(np.linspace(tau_lb, tau_ub, 120)):
   X = SW(n=N, d=M, tau=tau)
   dX = pdist(X)
   diam_f = sx.flag_filter(dX)
   SI._weights[0] = np.repeat(1e-8, sx.card(S,0))
   SI._weights[1] = diam_f(rank_to_comb(SI.simplices[1], k=2, order='colex', n=sx.card(S,0)))
   SI._weights[2] = diam_f(rank_to_comb(SI.simplices[2], k=3, order='colex', n=sx.card(S,0)))
-  SI._status[2].fill(0)
+  
+  SI.detect_pivots(dX, p=1, f_type="flag")
   SI.detect_pivots(dX, p=2, f_type="flag")
-  print(f"Step size: {tau:.4f}, Multiplicity: {SI.query(1,a,b,c,d, summands=False, method='cholesky')}")
+  # print(f"Step size: {tau:.4f}, Multiplicity: {SI.query(1,a,b,c,d, summands=False, method='cholesky')}")
+  # print(f"Step size: {tau:.4f}, Multiplicity: {SI.query(1,b,c, summands=False, method='cholesky')}")
+  # sr = SI.query(1,b,c,summands=False, method='cholesky')
+  # ss = SI.query_spectral(1,b,c,fun=lambda x: x / (x + 1e-2),summands=False, method="trace", verbose=False, maxiter=20, deg=5)
+  sr = SI.query(1,a,b,c,d,summands=False, method='cholesky')
+  ss = SI.query_spectral(1,a,b,c,d,fun=lambda x: x / (x + 1e-2),summands=False, method="trace", verbose=False, maxiter=20, deg=5)
+  tik_sums.append(ss)
+  tik_ranks.append(sr)
+  if ii % 10 == 0: 
+    print(ii)
 
+
+tau_rng = np.linspace(tau_lb, tau_ub, 120)
+p = figure(width=400, height=250, title="Tikhonov spectral sums @ varying tau")
+p.line(tau_rng * M, tik_sums, line_color="blue")
+p.line(tau_rng * M, tik_ranks, line_color="black")
+p.scatter(tau_rng * M, tik_sums, color="blue", size=3)
+p.scatter(tau_rng * M, tik_ranks, color="black", size=3)
+show(p)
+
+# %% Collect the max persistence for varying tau 
+tau_rng = np.linspace(tau_lb, tau_ub, 240)
+max_pers = [np.max(np.diff(ripser(SW(n=N, d=M, tau=tau))['dgms'][1], axis=1)) for tau in tau_rng]
+max_pers = np.array(max_pers)
+p = figure(width=400, height=250, title="Max persistence H1")
+p.line(tau_rng, max_pers)
+p.scatter(tau_rng, max_pers, size=3)
+show(p)
+
+# %% Collect the vineyards 
+from pbsig.vis import figure_dgm, bin_color
+from bokeh.io import show
+from bokeh.layouts import row, column
+
+_, tau_ub = sw_parameters(bounds = (0, 12 * np.pi), d=M, L=5)
+_, tau_lb = sw_parameters(bounds = (0, 12 * np.pi), d=M, L=7)
+tau_rng = np.linspace(tau_lb, tau_ub, 240)
+
+tau_color = (bin_color(np.arange(len(tau_rng)))*255).astype(np.uint8)
+h1_dgms = [ripser(SW(n=N, d=M, tau=tau))['dgms'][1] for tau in tau_rng]
+
+max_pers = np.array([np.max(np.diff(dgm, axis=1)) for dgm in h1_dgms])
+p_pers = figure(width=400, height=250, title="Max persistence H1")
+p_pers.line(x=tau_rng*M, y=max_pers, color='black')
+p_pers.scatter(x=tau_rng*M, y=max_pers, color=tau_color)
+show(p_pers)
+
+def top_k_pairs(dgm, k: int):
+  """Returns top-k pairs by lifetime"""
+  top_k_ind = np.argpartition(-np.ravel(np.diff(dgm, axis=1)), kth=k)[:k]
+  return dgm[top_k_ind,:]
+
+vy_pts = np.row_stack([top_k_pairs(dgm, 3) for dgm in h1_dgms])
+
+p_dgm = figure_dgm()
+p_dgm.scatter(*vy_pts.T, color=np.tile(tau_color, 3).reshape((len(tau_color)*3, 4)))
+p_dgm.scatter(*ripser(SW(n=N, d=M, L=6))['dgms'][1][-1,:], color='red', size=5)
+show(p_dgm)
+
+
+
+
+
+
+
+# %% 
+from pbsig.vis import figure_dgm
+diagrams = ripser(SW(n=N, d=M, tau=0.52))['dgms']
+show(figure_dgm(diagrams[1]))
 
 # timeit.timeit(lambda: SI.query(1,b,c,summands=True, method='cholesky'), number=10)
 # timeit.timeit(lambda: SI.query(1,a,b,c,d,summands=True, method='cholesky'), number=10)
@@ -113,12 +196,15 @@ p.x_range = Range1d(0, 9)
 show(p)
 
 
-# %% 
+# %% Benchmarks
 import timeit
 timeit.timeit(lambda: ripser(X), number=10)
-timeit.timeit(lambda: SI.query(1,a,b,c,d, summands=True, method="cholesky"), number=10)
-timeit.timeit(lambda: SI.query(1,b,c, summands=True, method="cholesky"), number=10)
-timeit.timeit(lambda: SI.detect_pivots(dX, p=2, f_type="flag"), number=1)
+timeit.timeit(lambda: SI.query(1,a,b,c,d,summands=True, method="cholesky"), number=10)
+timeit.timeit(lambda: SI.query(1,b,c,summands=True, method="cholesky"), number=10)
+timeit.timeit(lambda: SI.query(1,b,c,summands=True, method="trace"), number=10)
+timeit.timeit(lambda: SI.query_spectral(1,b,c,summands=True, method="trace", deg=5, maxiter=20), number=10)
+timeit.timeit(lambda: SI.query_spectral(1,b,c,summands=True, method="trace", deg=4, maxiter=5, quad='fttr'), number=10)
+# timeit.timeit(lambda: SI.detect_pivots(dX, p=2, f_type="flag"), number=1)
 
 
 from spirit.apparent_pairs import compress_index, deflate_sparse
@@ -130,7 +216,7 @@ profile.add_function(SI.lower_left)
 profile.add_function(deflate_sparse)
 profile.add_function(compress_index)
 profile.enable_by_count()
-SI.query(2,a,b,c,d, summands=True, method="cholesky")
+SI.query(1,a,b,c,d, summands=True, method="cholesky")
 profile.print_stats()
 
 from line_profiler import LineProfiler

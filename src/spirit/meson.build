@@ -13,7 +13,8 @@ endforeach
 python_sources = [
   '__init__.py', 
   '__version__.py', 
-  'apparent_pairs.py'
+  'apparent_pairs.py', 
+  'query.py'
 ]
 
 ## Print install directory

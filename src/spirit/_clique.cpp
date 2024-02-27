@@ -56,13 +56,27 @@ struct StarFilter {
   StarFilter(const size_t n_) : n(n_) {};
   StarFilter(const size_t n_, std::vector< T > w_) : n(n_), weights(w_) {};
 
-  template< std::integral I >
-  auto simplex_index(I* b, I* e) const -> T {
+  // template< std::integral I >
+  template< typename Iter >
+  auto simplex_index(Iter b, Iter e) const -> T {
     T s_weight = -std::numeric_limits< T >::infinity(); 
     for (; b != e; ++b){
       s_weight = std::max(s_weight, weights[*b]);
     }
     return s_weight; 
+  }
+
+  template< typename Lambda > 
+  void p_simplices(const size_t p, const T threshold, Lambda&& f) const {
+    auto vertices = std::vector< size_t >(n, 0);
+    std::iota(vertices.rbegin(), vertices.rend(), 0);
+    combinatorial::for_each_combination(vertices.begin(), vertices.begin()+(p+1), vertices.end(), [&](auto b, auto e){
+      auto s_weight = simplex_index(b, e);
+      if (s_weight <= threshold){
+        f(b, e, s_weight);
+      }
+      return false; 
+    });
   }
 };
 
@@ -78,9 +92,11 @@ struct FlagFilter {
     assert(w_.size() == (n*(n - 1) / 2));
   };
 
-  template< std::integral I >
-  auto simplex_index(I* b, I* e) const -> T {
-    T s_weight = -std::numeric_limits< T >::infinity();
+  // template< std::integral I >
+  template< typename Iter >
+  auto simplex_index(Iter b, Iter e) const -> T {
+    T s_weight = std::numeric_limits< T >::min();
+    if (std::distance(b, e) <= 1){ return s_weight; }
     combinatorial::for_each_combination(b, b+2, e, [this, &s_weight](auto b, [[maybe_unused]] auto e){
       s_weight = std::max(
         s_weight, 
@@ -89,6 +105,19 @@ struct FlagFilter {
       return false; 
     });
     return s_weight;
+  }
+
+  template< typename Lambda > 
+  void p_simplices(const size_t p, const T threshold, Lambda&& f) const{
+    auto vertices = std::vector< size_t >(n, 0);
+    std::iota(vertices.rbegin(), vertices.rend(), 0);
+    combinatorial::for_each_combination(vertices.begin(), vertices.begin()+(p+1), vertices.end(), [&](auto b, auto e){
+      auto s_weight = simplex_index(b, e);
+      if (s_weight <= threshold){
+        f(b, e, s_weight);
+      }
+      return false; 
+    });
   }
 
   // Given index of simplex S, its weight, and the vertex id 'v' of face F = S - {v}
@@ -111,9 +140,10 @@ struct MetricFilter {
   MetricFilter(const size_t n_, const size_t d_, std::vector< T > coords) : n(n_), d(d_), points(coords) {
   };
 
-  template< std::integral I >
-  auto simplex_index(I* b, I* e) const -> T {
-    T s_weight = -std::numeric_limits< T >::infinity();
+  // template< std::integral I >
+  template< typename Iter >
+  auto simplex_index(Iter b, Iter e) const -> T {
+    T s_weight = std::numeric_limits< T >::min();
     combinatorial::for_each_combination(b, b+2, e, [this, &s_weight](auto b, [[maybe_unused]] auto e){
       const index_t i = *b;
       const index_t j = *(b+1);
@@ -125,6 +155,19 @@ struct MetricFilter {
       return false; 
     });
     return s_weight;
+  }
+
+  template< typename Lambda > 
+  void p_simplices(const size_t p, const T threshold, Lambda&& f) const {
+    auto vertices = std::vector< size_t >(n, 0);
+    std::iota(vertices.rbegin(), vertices.rend(), 0);
+    combinatorial::for_each_combination(vertices.begin(), vertices.begin()+(p+1), vertices.end(), [&](auto b, auto e){
+      auto s_weight = simplex_index(b, e);
+      if (s_weight <= threshold){
+        f(b, e, s_weight);
+      }
+      return false; 
+    });
   }
 
   // Given index of simplex S, its weight, and the vertex id 'v' of face F = S - {v}
@@ -246,18 +289,18 @@ struct Cliqueser {
     return zero_facet; 
   }
 
-  // Given a (dim)-dimensional simplex, find it's facet with identical simplex weight and detect whether 
-  // the two form an apparent pair in the reverse colexicographically-refined filtration
-  auto apparent_zero_facet(index_t cns_rank, size_t dim) const -> index_t {
-    const auto facet = zero_facet(cns_rank, dim);
-    return (facet != -1) && (cns_rank == zero_cofacet(facet, dim-1)) ? facet : -1; 
+  // Given a p-simplex, find it's (p-1)-face with identical filter weight and detect whether 
+  // the two form a [reverse colexicographical] apparent pair in the simplexwise filtration
+  auto apparent_zero_facet(const index_t cns_rank, const size_t p) const -> index_t {
+    const auto facet = zero_facet(cns_rank, p);
+    return (facet != -1) && (cns_rank == zero_cofacet(facet, p-1)) ? facet : -1; 
   }
 
-  // Given a (dim)-dimensional simplex, find it's cofacet with identical simplex weight and detect whether 
-  // the two form an apparent pair in the reverse colexicographically-refined filtration
-  auto apparent_zero_cofacet(index_t cns_rank, size_t dim) const -> index_t {
-    const auto cofacet = zero_cofacet(cns_rank, dim);
-    return (cofacet != -1) && (cns_rank == zero_facet(cofacet, dim+1)) ? cofacet : -1; 
+  // Given a p-simplex, find it's (p+1)-face with identical filter weight and detect whether 
+  // the two form a [reverse colexicographical] apparent pair in the simplexwise filtration
+  auto apparent_zero_cofacet(const index_t cns_rank, const size_t p) const -> index_t {
+    const auto cofacet = zero_cofacet(cns_rank, p);
+    return (cofacet != -1) && (cns_rank == zero_facet(cofacet, p+1)) ? cofacet : -1; 
   }
 
   private: 
@@ -316,8 +359,7 @@ void _clique_wrapper(py::module& m, std::string suffix, Lambda&& init){
     // .def("apparent_zero_facets", [](){
 
     // })
-    .def("apparent_zero_cofacets", [](const FT& M, const py_array< index_t >& cns_ranks, const size_t dim) -> py_array< index_t >{
-      
+    .def("apparent_zero_cofacets", [](const FT& M, const py_array< index_t >& cns_ranks, const size_t dim) { // -> py_array< index_t >
       const size_t nr = static_cast< const size_t >(cns_ranks.size());
       auto ap = std::vector< index_t >();
       ap.reserve(nr);
@@ -327,6 +369,109 @@ void _clique_wrapper(py::module& m, std::string suffix, Lambda&& init){
       }
       auto ap_out = py_array< index_t >(nr, ap.data());
       return ap_out; 
+    })
+    .def("p_simplices", [](const FT& M, const size_t p, const float threshold){
+      auto p_simplices = std::vector< index_t >();
+      M.filter.p_simplices(p, threshold, [p, &p_simplices](auto b, [[maybe_unused]] auto e, [[maybe_unused]] const float weight){
+        auto r = combinatorial::rank_colex_k(b, p+1); // assumes b in reverse order
+        p_simplices.push_back(r);
+      });
+      const auto out = py_array< index_t >(p_simplices.size(), p_simplices.data());
+      return out;
+    })
+    .def("build_coo", [](const FT& M, const size_t p, const py_array< index_t >& p_simplices, const py_array< index_t >& f_simplices){
+      const index_t* ps = p_simplices.data();
+      const size_t np = static_cast< size_t >(p_simplices.size());
+      auto ri = std::vector< index_t >(np * (p+1));
+      auto ci = std::vector< index_t >(np * (p+1));
+      auto di = std::vector< float >(np * (p+1));
+      size_t ii = 0; 
+      
+      // TODO: break thi sinto three loops and parallelize
+      float s; 
+      for (auto j = 0; j < p_simplices.size(); ++j){
+        s = -1.0; 
+        M.enum_boundary(ps[j], p, [&](index_t r){
+          s *= -1; 
+          ri[ii] = r;
+          ci[ii] = j;
+          di[ii] = s;
+          ++ii;
+          return true; 
+        });
+      } 
+
+      // Now, map the face ranks -> {0, 1, ..., n - 1}
+      size_t c = 0; 
+      auto index_map = std::unordered_map< index_t, index_t >();
+      const index_t* F = f_simplices.data();
+      for (auto i = 0; i != f_simplices.size(); ++i) {
+        auto s = F[i];
+        if (!index_map.contains(s)){
+          index_map.insert({ s, c });
+          // if (c <= 3){ std::cout << *r << " --> " << c << std::endl; }
+          c++;
+        }
+      }
+      std::for_each_n(ri.begin(), ri.size(), [&index_map](auto& r){
+        r = index_map[r];
+      });
+      // std::transform(ri.begin(), ri.end(), ri.begin(), [&index_map](auto r){ return index_map[r]; });
+      py_array< index_t > r_out_(ri.size(), ri.data());
+      py_array< index_t > c_out_(ci.size(), ci.data());
+      py_array< float > d_out_(di.size(), di.data());
+      return py::make_tuple(d_out_, py::make_tuple(r_out_, c_out_));
+    })
+    // Constructs the -psimplices + weights in the filtration up to a given threshold, optionally checking to see if 
+    // each simplex participates in an apparent pair as a positive or negative simplex
+    .def("build", [](const FT& M, const size_t p, const float threshold, bool check_pos = false, bool check_neg = false, const bool filter_pos = false){
+      auto p_simplices = std::vector< index_t >();
+      auto p_weights = std::vector< float >();
+      auto p_status = std::vector< int >();
+      auto apparent_check = std::function< int(index_t)>();
+      check_neg = check_neg & (p > 0);
+      check_pos = check_pos & (p < BC.BT.size());// BC.BT.size() == max_dim + 1 
+      if (check_neg && check_pos){
+        apparent_check = [&](const index_t r){
+          const auto fa_r = M.apparent_zero_facet(r, p); // check if it has apparent zero facet 
+          if (fa_r != -1){
+            return -fa_r; // r is negative
+          }
+          const auto ca_r = M.apparent_zero_cofacet(r, p); 
+          return ca_r == -1 ? 0 : ca_r; // r is positive 
+        };
+      } else if (check_neg){
+        apparent_check = [&](const index_t r){ 
+          const auto fa_r = M.apparent_zero_facet(r, p); 
+          return fa_r != -1 ? -fa_r : 0; // r is negative
+        };
+      } else if (check_pos){
+        apparent_check = [&](const index_t r){
+          const auto ca_r = M.apparent_zero_cofacet(r, p); 
+          return ca_r != -1 ? ca_r : 0;  // r is positive
+        };
+      } else {
+        apparent_check = []([[maybe_unused]] const index_t r){ return 0; };
+      }
+      M.filter.p_simplices(p, threshold, [p, filter_pos, &apparent_check, &p_simplices, &p_weights, &p_status](auto b, [[maybe_unused]] auto e, const float w){
+        const auto r = combinatorial::rank_colex_k(b, p+1); // assumes b in reverse order
+        const auto af = apparent_check(r);
+        if (!filter_pos){
+          p_simplices.push_back(r);
+          p_weights.push_back(w);
+          p_status.push_back(af);
+        } else {
+          if (af <= 0){
+            p_simplices.push_back(r);
+            p_weights.push_back(w);
+            p_status.push_back(af);
+          }
+        }
+      });
+      py_array< index_t > ps_out_(p_simplices.size(), p_simplices.data());
+      py_array< float > pw_out_(p_weights.size(), p_weights.data());
+      py_array< int > st_out_(p_status.size(), p_status.data());
+      return py::make_tuple(ps_out_, pw_out_, st_out_);
     })
     ;
 }
@@ -371,10 +516,10 @@ PYBIND11_MODULE(_clique, m) {
     auto r_out = std::vector< int >();
     auto c_out = std::vector< int >();
     auto d_out = std::vector< float >();
-    r_out.reserve(np*3);
+    r_out.reserve(nq*3);
     c_out.reserve(nq*3);
+    d_out.reserve(nq*3);
     const size_t n_entries = static_cast< const size_t >(data.size());
-
     for (size_t i = 0; i < n_entries; ++i){
       if (p_inc_ptr[r_ptr[i]] & q_inc_ptr[c_ptr[i]]){
         r_out.push_back(r_ptr[i]);

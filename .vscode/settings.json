@@ -89,6 +89,8 @@
     "semaphore": "cpp",
     "stop_token": "cpp",
     "thread": "cpp",
-    "mprealsupport": "cpp"
+    "mprealsupport": "cpp",
+    "*.ipp": "cpp",
+    "alignedvector3": "cpp"
   }
 }

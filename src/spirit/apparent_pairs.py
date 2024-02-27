@@ -1,15 +1,16 @@
-from typing import Callable, Optional, Union
 import numpy as np
-from numpy.typing import ArrayLike
+import splex as sx
+import _clique as clique_mod
+
+from typing import Callable, Optional, Union
+from scipy.sparse import coo_array, sparray, coo_matrix, issparse
+from scipy.sparse.linalg import LinearOperator
+
 from scipy.special import comb
 from itertools import combinations
 from combin import rank_to_comb, comb_to_rank
-from scipy.sparse import coo_array, sparray, coo_matrix
-from scipy.sparse.linalg import LinearOperator
-from typing import * 
 
-import splex as sx
-import _clique as clique_mod
+from typing import * 
 
 ## from: https://stackoverflow.com/questions/4110059/pythonor-numpy-equivalent-of-match-in-r
 def index_of(a: List[Hashable], b: List[Hashable], default: Any = None) -> List[int]:
@@ -46,8 +47,7 @@ def deflate_sparse(A: sparray, mask: np.ndarray = None, ind: bool = False, sort_
   # return A_deflated if not(ind) else (A_deflated, ri, ci)
 
 def compress_index(A: sparray, row_mask: np.ndarray, col_mask: np.ndarray, ind: bool = False):
-  """Compresses a given sparse coo-matrix 'A' by keeping only it's given row/column indices
-  """
+  """Compresses a given sparse coo-matrix 'A' by keeping only the supplied row/column indices"""
   from hirola import HashTable
   from scipy.sparse import coo_matrix
   A = A if (hasattr(A, "row") and hasattr(A, "col") and hasattr(A, "data")) else A.tocoo()
@@ -76,7 +76,7 @@ class UpLaplacian(LinearOperator):
     x *= self.wp
     return x
 
-  def as_sparse(self):
+  def tosparse(self):
     # from scipy.sparse import dia_array
     from scipy.sparse import dia_matrix
     n, m = len(self.wp), len(self.wq)
@@ -84,10 +84,8 @@ class UpLaplacian(LinearOperator):
     WQ = dia_matrix((np.array([self.wq]), [0]), shape=(m,m))
     return WP @ self.D @ WQ @ self.D.T @ WP
 
-
-
 class SpectralRI:
-  """Configurable linear operator useful for assessing the rank of 'lower-left' submatrices of the p-th simplicial boundary operator.
+  """Spectral-approximation of the persistent rank invariant. 
 
   An instance of this class stores two boundary matrices: one internal one representing the operator over the 'global' complex, and 
   one 'fitted' operator representing a (re)-weighted subset of the global one. 
@@ -127,20 +125,54 @@ class SpectralRI:
   def cns(self, C) -> int:
     return np.array(comb_to_rank(C, n=self.n, order='colex'), dtype=np.int64)
 
-  def __init__(self, S):
-    from copy import deepcopy
-    P = range(sx.dim(S) + 1)
-    self.n = sx.card(S, 0)
-    self._weights = { q : np.ones(sx.card(S, q)) for q in P } 
-    self._simplices = { q : self.cns(sx.faces(S, q)) if sx.card(S,q) > 0 else [] for q in P }
-    self._status = { q : np.zeros(sx.card(S, q)) for q in P } 
-    self._D = { q : sx.boundary_matrix(S, p=q).tocoo() for q in P }
-    self.weights = deepcopy(self._weights)
-    self.simplices = deepcopy(self._simplices)
-    self.status = deepcopy(self._status)
-    self.D = deepcopy(self._D)
+  def __init__(self, n: int, max_dim: int):
+    self.n = n
+    self.max_dim = max_dim
+    P = range(self.max_dim + 1)
+    self._weights = { q : [] for q in P } 
+    self._simplices = { q : [] for q in P }
+    self._status = { q : [] for q in P } 
+    self._D = { q : [] for q in P } 
+
+  def construct(self, X: np.ndarray, p: int = None, threshold: float = np.inf, apparent: bool = False, discard: bool = False, filter: str = "flag", **kwargs):
+    """Constructs the simplices, weights, and pivot status of given filtration type up to *threshold*.
+    
+    Parameters: 
+      X = point cloud, pairwise distances, or generic input type needed by 'filter'
+      p = the dimension to construct. If not supplied, constructs all simplices up to 'max_dim'.
+      threshold = filtration index to construct up to. 
+      apparent = whether to 
+      discard = 
+    """
+    assert filter == "star" or filter == "flag" or filter == "metric"
+    CM = clique_mod.__dict__['Cliqueser_' + filter]
+    self.f_type = filter
+    self.cm = CM(self.n, self.max_dim+1)
+    self.cm.init(X) # format of X depends on f_type 
+    # const size_t p, const float threshold, const bool check_pos = false, const bool check_neg = false, const bool filter_pos = false){
+    P = range(self.max_dim + 1) if p is None else [int(p)]
+    for p in P:
+      p_simplices, p_weights, p_status = self.cm.build(p, threshold, apparent, apparent, discard)
+      self._simplices[p] = p_simplices
+      self._weights[p] = p_weights
+      self._status[p] = p_status
+
+  def boundary_matrix(self, p: int, dtype = np.float32):
+    if p > self.max_dim: 
+      raise ValueError(f"Invalid dimension p = '{p}' supplied.")
+    if p <= 0: 
+      return np.empty(shape=(0, len(self._simplices[0])), dtype=dtype)
+    else:
+      from scipy.sparse import coo_matrix
+      card_p, card_f = len(self._simplices[p]), len(self._simplices[p-1])
+      if card_p == 0 or card_f == 0: 
+        return np.empty(shape=(card_f, card_p), dtype=dtype)
+    d, (ri,ci) = self.cm.build_coo(p, self._simplices[p], self._simplices[p-1])
+    D = coo_matrix((d, (ri,ci)), shape=(card_f, card_p), dtype=dtype)
+    return D
 
   def reset(self, weights: bool = False):
+    """Reset's the boundary matrix data, the weights, and the pivot status to their default initialized values."""
     for q in self._weights.keys():
       if weights:
         self._weights[q].fill(1)
@@ -148,55 +180,23 @@ class SpectralRI:
       N = len(self._simplices[q])
       self._D[q].data = np.repeat([(-1)**q for q in range(q+1)], N)
 
-  # def compressed_D(self, p: int, apparent: bool = False) -> sparray:
-  #   """Removes (co)boundary (p/p+1)-chains lying in the nullspace of the operator, returning the compressed sparse matrix as a result.""" 
-  #   r, c = self._D[p].row, self._D[p].col
-  #   if len(self._weights[p]) > 0:
-  #     self._D[p].data[self._weights[p][r] == 0] = 0
-  #   if len(self._weights[p+1]) > 0:
-  #     self._D[p].data[self._weights[p+1][c] == 0] = 0
-  #   return deflate_sparse(self._D[p])
-
   def lower_left(self, i: float, j: float, p: int, deflate: bool = False, apparent: bool = False, expand: bool = False):
-    """Modifies both the (p / p - 1)-weights and D[p] to represent the lower left submatrix D_{p}[(i+1):,:j].
-    """
-    ## Set the weights of the fixed complex to reflect (i,j)
-    f = p - 1
-    # self.reset(weights=False)
-    # self._weights[p] = np.where(self._weights[p] > i, self._weights[p], 0)
-    # self._weights[q] = np.where(self._weights[q] <= j, self._weights[q], 0) # np.logical_and(self._weights[q] > i, 
+    """Modifies both the (p / p - 1)-weights and D[p] to represent the lower left submatrix D_{p}[(i+1):,:j]."""
+    assert issparse(self._D[p]), "p-th boundary matrix not found. Has it been constructed?"
     
     ## This seems safe from a rank perspective
-    # self._weights[p] = np.where(np.logical_and(self._weights[p] > i, self._weights[p] <= j), self._weights[p], 0)
-    # self._weights[q] = np.where(np.logical_and(self._weights[q] > i, self._weights[q] <= j), self._weights[q], 0)
+    f = p - 1
     ri, ci = self._D[p].row, self._D[p].col
     f_inc = np.logical_and(self._weights[f] > i, self._weights[f] <= j)
     p_inc = np.logical_and(self._weights[p] > i, self._weights[p] <= j)
-    
-    ## See: https://stackoverflow.com/questions/71225872/why-does-numpy-viewbool-makes-numpy-logical-and-significantly-faster
-
-    # ri, ci = self._D[q].row, self._D[q].col
-    # nullspace = np.logical_and(self._weights[q][ci] == 0, self._weights[p][ri] == 0)
-    # self._D[q].data = np.where(nullspace, 0, self._D[q].data)
-    # self._D[q].data[self._weights[q][ci] == 0] = 0
-    # self._D[q].data[self._weights[p][ri] == 0] = 0
     
     ## If requested, also check status for apparent pairs, removing them when known
     if apparent:
       # f_inc[self._status[f] > 0] = False
       p_inc[self._status[p] > 0] = False
 
-    ## Zero elements outside of D[(i+1):,:j] based on the updated weights
-    # ri, ci = self._D[q].row, self._D[q].col
-    # self._D[q].data[self._weights[p][ri] == 0] = 0
-    # self._D[q].data[self._weights[q][ci] == 0] = 0
-    
-    ## Take the AND of both after expanding row and column indices
-    ## NOTE: This seems safe from a rank-based perspective!
-    # inc_mask = np.logical_and(f_inc[ri], p_inc[ci])
-
-
     ## Update the cached weights + boundary matrices
+    ## See: https://stackoverflow.com/questions/71225872/why-does-numpy-viewbool-makes-numpy-logical-and-significantly-faster
     if deflate: 
       if expand: 
         inc_mask = f_inc[ri].view(bool) & p_inc[ci].view(bool)
@@ -213,28 +213,10 @@ class SpectralRI:
       wp = np.where(p_inc, self._weights[p], 0.0)
     assert len(wf) == Dp.shape[0], f"Incorrect weight lengths ({len(wf)}) for # of {f}-rows! ({Dp.shape[0]})"
     assert len(wp) == Dp.shape[1], f"Incorrect weight lengths ({len(wp)}) for # of {p}-cols! ({Dp.shape[1]})"
-
     return UpLaplacian(Dp, wf, wp)
 
-    ## Update the final shape
-    # self.shape = self.D[p].shape
-
-    # self._weights[p][self._weights[p] <= i] = 0
-    # self._weights[q][self._weights[q] > j] = 0
-    # self.D[p] = self.compressed_D(p)
-
-    # ## Populate the fitted attributes for the properties
-    # ri = np.unique(self._D[p].row[self._D[p].data != 0])
-    # ci = np.unique(self._D[p].col[self._D[p].data != 0])
-    # self.weights[p] = np.take(self._weights[p], ri) if len(ri) > 0 else self._weights[p]
-    # self.weights[q] = np.take(self._weights[q], ci) if len(ci) > 0 else self._weights[q] # self._q_weights > 0
-    # assert len(self.weights[p]) == self.D[p].shape[0], "Failed to compress! This shouldn't happen."
-
-    # self.shape = (self.D[p].shape[0], self.D[p].shape[0])
-    # return self 
-
   def rank(self, p: int, a: float, b: float, method: str = ["direct", "cholesky", "trace"], **kwargs):
-    """Computes the numerical rank of a 'lower-left' sub-matrix of the p-th boundary operator, as determined by (p/p-1) weights."""
+    """Computes the numerical rank of the (a,b)-lower-left submatrix of the p-th boundary operator."""
     if p <= 0: 
       return 0
     f = p - 1
@@ -252,7 +234,7 @@ class SpectralRI:
     LA = self.lower_left(a, b, p, deflate=True, apparent=True)
     if np.prod(LA.shape) == 0:
       return 0 
-      
+
     ## Try to first detect full rank via logdet 
     # from primate.trace import hutch
     # hutch(LA, deg=LA.shape[0], orth=, maxiter=5)
@@ -271,36 +253,30 @@ class SpectralRI:
     else:
       raise ValueError(f"Invalid method '{method}' supplied; must be one of 'direct', 'cholesky', or 'trace.'")
   
-  def spectral_fun(self, p: int, a: float, b: float, fun: Union[str, Callable], method: str = ["direct", "trace"], **kwargs):
+  def spectral_sum(self, p: int, a: float, b: float, fun: Union[str, Callable], method: str = ["trace", "direct"], **kwargs):
+    """Computes the spectral sum of the (a,b)-lower-left submatrix of the p-th boundary operator."""
     from primate.functional import hutch
-    if method == "direct" or method == ["direct", "trace"]:
-      LA = self.lower_left(a, b, p, deflate=True, apparent=True)  
-    else: 
+    LA = self.lower_left(a, b, p, deflate=True, apparent=True) 
+    if np.prod(LA.shape) == 0:
+      return 0 
+
+    ## USe either direct calculation or stochastic trace call
+    if method == "trace" or method == ["direct", "trace"]:
       assert method == "trace", "Invalid method specified"
-      LA = self.lower_left(a, b, p, deflate=True, apparent=True)  
-      return hutch(LA, **kwargs)
+      return hutch(LA, fun=fun, **kwargs)
+    else: 
+      assert isinstance(fun, Callable), "'fun' must be callable"
+      ew = np.linalg.eigvalsh(LA.tosparse().todense())
+      return np.sum(fun(ew))
 
-  def detect_pivots(self, X: np.ndarray, p: int, f_type: str = "lower"):
-    """Searches for apparent pairs in the complex, flagging any found as 'pivots'"""
-    from spirit.apparent_pairs import clique_mod
-    assert f_type == "lower" or f_type == "flag"
-    CT = clique_mod.Cliqueser_flag if f_type == "flag" else clique_mod.Cliqueser_lower
-    C = CT(self.n, p+1)
-    # q_ap = np.array([C.apparent_zero_facet(r, self.p+1) for r in self.qr])
-    C.init(X) # format of X depends on f_type 
-    # p_ap = np.array([C.apparent_zero_cofacet(r, p) for r in self.simplices[p]])
-    p_ap = C.apparent_zero_cofacets(self.simplices[p], p)
-    self._status[p][p_ap != -1] = p_ap[p_ap != -1] # set positive / save ranks of cofacets
-    # self._q_status = q_ap
-
-  def query(self, p: int, a: float, b: float, c: float = None, d: float = None, summands: bool = False, fun: str = "rank", **kwargs) -> float:
+  def query(self, p: int, a: float, b: float, c: float = None, d: float = None, summands: bool = False, **kwargs) -> float:
     """Queries the dimension of the persistent homology class H_p(a,b,c,d). """
     q = p + 1
     if (c is None and d is None) or (c == -np.inf and d == np.inf):
       terms = [0]*4
       terms[0] = np.sum(self._weights[p] <= a)
-      terms[1] = self.rank(p, 0.0, a, **kwargs)
-      terms[2] = self.rank(q, 0.0, b, **kwargs)
+      terms[1] = self.rank(p, 0, a, **kwargs)
+      terms[2] = self.rank(q, 0, b, **kwargs)
       terms[3] = self.rank(q, a, b, **kwargs)
       return sum(s*t for s,t in zip([+1,-1,-1,+1], terms)) if not(summands) else terms
       # raise NotImplementedError("not implemented yet")
@@ -309,196 +285,19 @@ class SpectralRI:
       terms = [self.rank(q, i, j, **kwargs) for cc, (i,j) in enumerate(pairs)]
       return sum(s*t for s,t in zip([+1,-1,-1,+1], terms)) if not(summands) else terms
 
-    # for cc, (i,j) in enumerate([(b,c), (a,c), (b,d), (a,d)]):
-    #   L.lower_left(i = i, j = j, p = 1)
-    #   print(rank_cholmod(L.D[2].tocsc()))
-
-
-  # @property
-  # def D(self):
-  #   ## If D has fitted operator, return that, otherwise return the original
-  #   return self.D_ if hasattr(self, "D_") else self._D
-  
-  # @D.setter
-  # def D(self, value):
-  #   raise ValueError("Cannot change the boundary matrix once constructed")
-
-  # @property
-  # def p_weights(self):
-  #   ## If has fitted attribute, return that, otherwise return the original
-  #   return self.p_weights_ if hasattr(self, "p_weights_") else self._p_weights
-
-  # @p_weights.setter
-  # def p_weights(self, value):
-  #   assert len(value) == len(self.p_weights) 
-  #   self._p_weights = np.array(value).astype(self.dtype)
-
-  # @property
-  # def q_weights(self):
-  #   ## If has fitted attribute, return that, otherwise return the original
-  #   return self.q_weights_ if hasattr(self, "q_weights_") else self._q_weights
-
-  # @q_weights.setter
-  # def q_weights(self, value):
-  #   assert len(value) == len(self.q_weights) 
-  #   self._q_weights = np.array(value).astype(self.dtype)    
-
-
-
-
-
-
-def _h0_apparent_pairs(K: sx.ComplexLike, f: Callable, refinement: str = "lex"):
-  n = sx.card(K, 0)
-  if sx.card(K,1) == 0: return []
-  edges = np.array(list(sx.faces(K,1))).astype(np.uint16)
-  E_ranks = comb_to_rank(edges, n=n, order='lex')
-
-  ## Store the initial list of apparent pair candidates
-  pair_candidates = []
-
-  ## Since n >> k in almost all settings, start by getting apparent pair candidates from the p+1 simplices
-  for e in E_ranks:
-    i, j = rank_to_comb(e, k=2, n=n, order='lex')
-    facets = [[i], [j]]
-    facet_weights = f(facets)
-    same_value = np.isclose(facet_weights, f([i,j]))
-    if any(same_value):
-      ## Choose the "youngest" facet, which is the *maximal* in lexicographical order
-      lex_min_ind = int(np.flatnonzero(same_value)[-1])
-      pair_candidates.append((facets[lex_min_ind], [i,j]))
-    
-  ## Now filter the existing pairs via scanning through each p-face's cofacets
-  true_pairs = []
-  for v,e in pair_candidates:
-    facet_weight = f(v)
-    
-    ## Find the "oldest" cofacet, which is the *minimal* in lexicographical order
-    max_cofacet = None
-    for k in range(n): # reversed for maximal
-      ## NOTE: equality is necessary here! Using <= w/ small rips filtration yields 16 pairs, whereas equality yields 48 pairs. 
-      if sx.Simplex(k) != sx.Simplex(v) and np.isclose(facet_weight, f(sx.Simplex([v,k]))): 
-        max_cofacet = sx.Simplex((k,v))
-        break
-    
-    ## If the relation is symmetric, then the two form an apparent pair
-    if max_cofacet is not None and max_cofacet == sx.Simplex(e):
-      true_pairs.append((tuple([v]), max_cofacet))
-  
-  return true_pairs
-
-def _h1_apparent_pairs(K: sx.ComplexLike, f: Callable, refinement: str = "lex", progess: bool = False):
-  n = sx.card(K, 0)
-  if sx.card(K,2) == 0: return []
-  triangles = np.array(list(sx.faces(K,2))).astype(np.uint16)
-  T_ranks = comb_to_rank(triangles, n=n, order='lex')
-
-  ## Store the initial list of apparent pair candidates
-  pair_candidates = []
-
-  ## Since n >> k in almost all settings, start by getting apparent pair candidates from the p+1 simplices
-  for t in T_ranks:
-    i, j, k = rank_to_comb(t, k=3, n=n, order='lex')
-    facets = [[i,j], [i,k], [j,k]]
-    facet_weights = f(facets)
-    same_value = np.isclose(facet_weights, f([i,j,k]))
-    if any(same_value):
-      ## Choose the "youngest" facet, which is the *maximal* in lexicographical order
-      lex_min_ind = int(np.flatnonzero(same_value)[-1])
-      pair_candidates.append((facets[lex_min_ind], [i,j,k]))
-    
-  ## Now filter the existing pairs via scanning through each p-face's cofacets
-  true_pairs = []
-  for e,t in pair_candidates:
-    i,j = e
-    facet_weight = f(e)
-    
-    ## Find the "oldest" cofacet, which is the *minimal* in lexicographical order
-    max_cofacet = None
-    for k in range(n): # reversed for maximal
-      ## NOTE: equality is necessary here! Using <= w/ small rips filtration yields 16 pairs, whereas equality yields 48 pairs. 
-      if k != i and k != j and np.isclose(facet_weight, f([i,j,k])): 
-        max_cofacet = sx.Simplex((i,j,k))
-        break
-    
-    ## If the relation is symmetric, then the two form an apparent pair
-    if max_cofacet is not None and max_cofacet == sx.Simplex(t):
-      true_pairs.append((tuple(e), max_cofacet))
-  
-  return true_pairs
-
-def apparent_pairs(K: sx.ComplexLike, f: Callable, p: int = 0, refinement: str = "lex"):
-  """Finds the H1 apparent pairs of lexicographically-refined clique filtration.
-
-  A persistence pair (tau, sigma) is said to be *apparent* iff: 
-    1. tau is the youngest facet of sigma 
-    2. sigma is the oldest cofacet of tau 
-    3. the pairing has persistence |f(sigma)-f(tau)| = 0 
-  
-  Parameters: 
-    K: Simplicial complex.
-    f: filter function defined on K.
-    refinement: the choice of simplexwise refinement. Only 'lex' is supported for now. 
-
-  Returns: 
-    pairs (e,t) with zero-persistence in the H1 persistence diagram.
-
-  Details: 
-    Observe tau is the facet of sigma with the largest filtration value, i.e. f(tau) >= f(tau') for any tau' \\in facets(sigma)
-    and sigma is cofacet of tau with the smallest filtration value, i.e. f(sigma) <= f(sigma') for any sigma' \\in cofacets(tau). 
-    There are potentially several cofacets of a given tau, thus to ensure uniqueness, this function assumes the 
-    filtration induced by f is a lexicographically-refined simplexwise filtrations. 
-    
-    Equivalently, for lexicographically-refined simplexwise filtrations, we have that a 
-    zero-persistence pair (tau, sigma) is said to be *apparent* iff: 
-      1. tau is the lexicographically *maximal* facet of sigma w/ f(tau) = f(sigma)
-      2. sigma is the lexicographically *minimal* cofacet of sigma w/ f(sigma) = f(tau)
-
-    Note that Bauer define similar notions but under the reverse colexicographical ordering, in which case the notions 
-    of minimal and maximal are reversed.
-
-    What is known about apparent pairs: 
-      - Any apparent pair in a simplexwise filtration is a persistence pair, regardless of the choice of coefficients
-      - Apparent pairs often form a large portion of the total number of persistence pairs in clique filtrations. 
-      - Apparent pairs of a simplexwise filtrations form a discrete gradient in the sense of Discrete Morse theory 
-
-    Moreover, if K is a Rips complex and all pairwise distances are distinct, it is knonw that the persistent pairs 
-    w/ 0 persistence of K in dimension 1 are precisely the apparent pairs.
-  """
-  if p == 0: 
-    return _h0_apparent_pairs(K,f,refinement)
-  elif p == 1: 
-    return _h1_apparent_pairs(K,f,refinement)
-  else: 
-    raise NotImplementedError("Haven't implemented higher AP calculations")
-
-  # result = []
-  # for T in K['triangles']:  
-  #   T_facets = comb_to_rank(combinations(T, 2), k=2, n=len(K['vertices']), order="lex")
-  #   max_facet = T_facets[np.max(np.flatnonzero(d[T_facets] == np.max(d[T_facets])))] # lexicographically maximal facet 
-  #   n = len(K['vertices'])
-  #   u, v = rank_to_comb(max_facet, k=2, n=n)
-  #   same_diam = np.zeros(n, dtype=bool)
-  #   for j in range(n):
-  #     if j == u or j == v: 
-  #       continue
-  #     else: 
-  #       cofacet = np.sort(np.array([u,v,j], dtype=int))
-  #       cofacet_diam = np.max(np.array([d[comb_to_rank(face, k=2, n=n, order="lex")] for face in combinations(cofacet, 2)]))
-  #       if cofacet_diam == d[max_facet]:
-  #         same_diam[j] = True
-  #   if np.any(same_diam):
-  #     j = np.min(np.flatnonzero(same_diam))
-  #     cofacet = np.sort(np.array([u,v,j], dtype=int))
-  #     if np.all(cofacet == T):
-  #       pair = (max_facet, comb_to_rank(cofacet, k=3, n=n, order="lex"))
-  #       result.append(pair)
-  # ap = np.array(result)
-  # return(ap)
-
-## From ripser paper: 
-# pair_totals = np.array([18145, 32167, 230051, 2192209, 1386646, 122324, 893])
-# non_ap = np.array([ 53, 576, 2466, 14006, 576, 438, 39 ])
-# (pair_totals-non_ap)/pair_totals
-# array([0.99707909, 0.98209345, 0.98928064, 0.99361101, 0.99958461, 0.99641935, 0.95632699])
+  def query_spectral(self, p: int, a: float, b: float, c: float = None, d: float = None, summands: bool = False, fun: Callable = np.sign, **kwargs):
+    """Queries the dimension of the persistent homology class H_p(a,b,c,d). """
+    q = p + 1
+    if (c is None and d is None) or (c == -np.inf and d == np.inf):
+      terms = [0]*4
+      terms[0] = np.sum(fun(self._weights[p][self._weights[p] <= a]))
+      terms[1] = self.spectral_sum(p, 0, a, fun, **kwargs)
+      terms[2] = self.spectral_sum(q, 0, b, fun, **kwargs)
+      terms[3] = self.spectral_sum(q, a, b, fun, **kwargs)
+      return sum(s*t for s,t in zip([+1,-1,-1,+1], terms)) if not(summands) else terms
+      # raise NotImplementedError("not implemented yet")
+    else:
+      pairs = [(b,c), (a,c), (b,d), (a,d)] 
+      terms = [self.spectral_sum(q, i, j, fun, **kwargs) for cc, (i,j) in enumerate(pairs)]
+      return sum(s*t for s,t in zip([+1,-1,-1,+1], terms)) if not(summands) else terms
 
