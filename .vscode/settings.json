@@ -91,6 +91,10 @@
     "thread": "cpp",
     "mprealsupport": "cpp",
     "*.ipp": "cpp",
-    "alignedvector3": "cpp"
+    "alignedvector3": "cpp",
+    "filesystem": "cpp",
+    "dense_hash_map": "cpp",
+    "sparse_hash_map": "cpp",
+    "sparsetable": "cpp"
   }
 }

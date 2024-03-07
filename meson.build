@@ -34,6 +34,7 @@ _cpp_args = compiler.get_supported_arguments(
   '-Wno-conversion',
   '-Wno-misleading-indentation',
   '-fPIC', 
+  '-Wno-sign-compare',
   '-fvisibility=hidden',
   '-Wno-deprecated-anon-enum-enum-conversion'
 )

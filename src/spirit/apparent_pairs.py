@@ -3,7 +3,7 @@ import splex as sx
 import _clique as clique_mod
 
 from typing import Callable, Optional, Union
-from scipy.sparse import coo_array, sparray, coo_matrix, issparse
+from scipy.sparse import coo_array, sparray, coo_matrix, issparse, spmatrix
 from scipy.sparse.linalg import LinearOperator
 
 from scipy.special import comb
@@ -84,6 +84,24 @@ class UpLaplacian(LinearOperator):
     WQ = dia_matrix((np.array([self.wq]), [0]), shape=(m,m))
     return WP @ self.D @ WQ @ self.D.T @ WP
 
+def boundary_matrix(p: int, p_simplices: np.ndarray, f_simplices: np.ndarray = [], dtype=np.int8):
+  """
+  p = dimension of the p-simplices
+  p_simplices = colex ranks of the p-simplices
+  f_simplices = colex ranks of the (p-1)-simplices
+  """
+  if p <= 0: 
+    return np.empty(shape=(0, len(p_simplices)), dtype=dtype)
+  card_p, card_f = len(p_simplices), len(f_simplices)
+  if card_f == 0: 
+    raise ValueError("Not supported yet")
+  if card_p == 0 or card_f == 0: 
+    return np.empty(shape=(card_f, card_p), dtype=dtype)
+  n = np.max(rank_to_comb(np.max(p_simplices), order='colex', k=p+1)) + 1
+  d, (ri,ci) = clique_mod.build_coo(n, p, p_simplices, f_simplices)
+  D = coo_matrix((d, (ri,ci)), shape=(card_f, card_p), dtype=dtype)
+  return D
+
 class SpectralRI:
   """Spectral-approximation of the persistent rank invariant. 
 
@@ -134,6 +152,14 @@ class SpectralRI:
     self._status = { q : [] for q in P } 
     self._D = { q : [] for q in P } 
 
+  def __repr__(self) -> str:
+    max_dim = max(self._simplices.keys())
+    msg = f"Spectral Rank Invariant up to {max_dim}-d\n"
+    ns = tuple([len(s) for s in self._simplices.values()])
+    nd = tuple(range(max_dim+1))
+    msg += f"with {ns}-simplices of dimension {nd}"
+    return msg
+
   def construct(self, X: np.ndarray, p: int = None, threshold: float = np.inf, apparent: bool = False, discard: bool = False, filter: str = "flag", **kwargs):
     """Constructs the simplices, weights, and pivot status of given filtration type up to *threshold*.
     
@@ -167,7 +193,7 @@ class SpectralRI:
       card_p, card_f = len(self._simplices[p]), len(self._simplices[p-1])
       if card_p == 0 or card_f == 0: 
         return np.empty(shape=(card_f, card_p), dtype=dtype)
-    d, (ri,ci) = self.cm.build_coo(p, self._simplices[p], self._simplices[p-1])
+    d, (ri,ci) = clique_mod.build_coo(len(self._simplices[0]), p, self._simplices[p], self._simplices[p-1])
     D = coo_matrix((d, (ri,ci)), shape=(card_f, card_p), dtype=dtype)
     return D
 
@@ -183,12 +209,12 @@ class SpectralRI:
   def lower_left(self, i: float, j: float, p: int, deflate: bool = False, apparent: bool = False, expand: bool = False):
     """Modifies both the (p / p - 1)-weights and D[p] to represent the lower left submatrix D_{p}[(i+1):,:j]."""
     assert issparse(self._D[p]), "p-th boundary matrix not found. Has it been constructed?"
-    
+
     ## This seems safe from a rank perspective
     f = p - 1
     ri, ci = self._D[p].row, self._D[p].col
-    f_inc = np.logical_and(self._weights[f] > i, self._weights[f] <= j)
-    p_inc = np.logical_and(self._weights[p] > i, self._weights[p] <= j)
+    f_inc = np.logical_and(self._weights[f] >= i, self._weights[f] <= j)
+    p_inc = np.logical_and(self._weights[p] >= i, self._weights[p] <= j)
     
     ## If requested, also check status for apparent pairs, removing them when known
     if apparent:
@@ -199,7 +225,7 @@ class SpectralRI:
     ## See: https://stackoverflow.com/questions/71225872/why-does-numpy-viewbool-makes-numpy-logical-and-significantly-faster
     if deflate: 
       if expand: 
-        inc_mask = f_inc[ri].view(bool) & p_inc[ci].view(bool)
+        inc_mask = f_inc[ri].view(bool) & p_inc[ci].view(bool) # explicit index expansion 
         Dp, ri_inc, ci_inc = deflate_sparse(self._D[p], inc_mask, ind=True)
       else:
         Dp, ri_inc, ci_inc = compress_index(self._D[p], f_inc, p_inc, ind=True)
@@ -216,18 +242,22 @@ class SpectralRI:
     return UpLaplacian(Dp, wf, wp)
 
   def rank(self, p: int, a: float, b: float, method: str = ["direct", "cholesky", "trace"], **kwargs):
-    """Computes the numerical rank of the (a,b)-lower-left submatrix of the p-th boundary operator."""
+    """Computes the numerical rank of the (>= a, <= b)-lower-left submatrix of the p-th boundary operator."""
     if p <= 0: 
       return 0
     f = p - 1
-    f_inc = np.logical_and(self._weights[f] > a, self._weights[f] <= b)
-    p_inc = np.logical_and(self._weights[p] > a, self._weights[p] <= b)
+    f_inc = np.logical_and(self._weights[f] >= a, self._weights[f] <= b)
+    p_inc = np.logical_and(self._weights[p] >= a, self._weights[p] <= b)
     
+    ## Degenerate case
+    if np.sum(f_inc) == 0 or np.sum(p_inc) == 0:
+      return 0 
+
     ## First, check to see if the sub-matrix of interest consists solely of pivot entries 
     is_pivot_rows = self._status[f][f_inc] < 0 # negative p-simplices 
     is_pivot_cols = self._status[p][p_inc] < 0 # negative q-simplices
     if np.all(is_pivot_rows) or np.all(is_pivot_cols):
-      print("shortcut taken")
+      print("apparent full rank shortcut taken")
       return min(len(is_pivot_rows), len(is_pivot_cols))
 
     ## Start with a matrix-free Up Laplacian operator 
@@ -269,20 +299,22 @@ class SpectralRI:
       ew = np.linalg.eigvalsh(LA.tosparse().todense())
       return np.sum(fun(ew))
 
-  def query(self, p: int, a: float, b: float, c: float = None, d: float = None, summands: bool = False, **kwargs) -> float:
+  def query(self, p: int, a: float, b: float, c: float = None, d: float = None, delta: float = 1e-12, summands: bool = False, **kwargs) -> float:
     """Queries the dimension of the persistent homology class H_p(a,b,c,d). """
     q = p + 1
     if (c is None and d is None) or (c == -np.inf and d == np.inf):
       terms = [0]*4
       terms[0] = np.sum(self._weights[p] <= a)
-      terms[1] = self.rank(p, 0, a, **kwargs)
-      terms[2] = self.rank(q, 0, b, **kwargs)
-      terms[3] = self.rank(q, a, b, **kwargs)
+      terms[1] = self.rank(p, -np.inf, a, **kwargs)
+      terms[2] = self.rank(q, -np.inf, b, **kwargs)
+      terms[3] = self.rank(q, a+delta, b, **kwargs)
       return sum(s*t for s,t in zip([+1,-1,-1,+1], terms)) if not(summands) else terms
       # raise NotImplementedError("not implemented yet")
     else:
-      pairs = [(b,c), (a,c), (b,d), (a,d)] 
-      terms = [self.rank(q, i, j, **kwargs) for cc, (i,j) in enumerate(pairs)]
+      pairs = [(b+delta,c), (a+delta,c), (b+delta,d), (a+delta,d)] 
+      # pattern = [(1,1),(1,0),(0,1),(0,0)]
+      # terms = [self.rank(q, i+x*delta, j-y*delta, **kwargs) for cc, (x,y) in enumerate(pattern)]
+      terms = [self.rank(q, i, j, **kwargs) for i,j in pairs]
       return sum(s*t for s,t in zip([+1,-1,-1,+1], terms)) if not(summands) else terms
 
   def query_spectral(self, p: int, a: float, b: float, c: float = None, d: float = None, summands: bool = False, fun: Callable = np.sign, **kwargs):
