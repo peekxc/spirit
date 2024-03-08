@@ -71,13 +71,20 @@ show(figure_dgm(dgm1))
 
 # %% Somehow try to acquire the simplex pair 
 from spirit.apparent_pairs import SpectralRI
+from scipy.spatial.distance import squareform
+
 N, M = 50, 2
 X = SW(n=N, d=M, tau=tau_opt)
 dX = pdist(X)
+DX = squareform(dX)
 RI = SpectralRI(n=N, max_dim=2)
 RI.construct(dX, p=0, apparent=False, discard=False, filter="flag")
 RI.construct(dX, p=1, apparent=False, discard=False, filter="flag")
 RI.construct(dX, p=2, apparent=True, discard=True, filter="flag")
+
+import timeit
+timeit.timeit(lambda: RI.construct(dX, p=2, apparent=True, discard=True, filter="flag"), number = 10)
+timeit.timeit(lambda: ripser(DX, distance_matrix=True), number=10)
 
 RI._D[0] = RI.boundary_matrix(0)
 RI._D[1] = RI.boundary_matrix(1)
