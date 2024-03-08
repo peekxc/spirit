@@ -5,7 +5,7 @@ import numpy as np
 import splex as sx
 from scipy.spatial.distance import pdist 
 from scipy.sparse.linalg import eigsh
-# from spirit.apparent_pairs import SpectralRI, deflate_sparse, UpLaplacian
+from spirit.apparent_pairs import SpectralRI
 from pbsig.persistence import sliding_window
 from combin import rank_to_comb, comb_to_rank
 from ripser import ripser
@@ -62,20 +62,8 @@ opt_window = (M*2*np.pi)/(M+1)
 p.add_layout(Span(location=opt_window, dimension='height', line_color='red'))
 show(p)
 
-# %% 
-# (56,72), (0,7,36)
-# E_birth = np.array([sx.flag_filter(pdist(SW(n=N, d=M, tau=tau)))(sx.Simplex([56,72])) for tau in tau_rng])
-# T_death = np.array([sx.flag_filter(pdist(SW(n=N, d=M, tau=tau)))(sx.Simplex([0,7,36])) for tau in tau_rng])
-# p.line(tau_rng*M, T_death - E_birth, color='red')
-# p.scatter(tau_rng*M, T_death - E_birth, size=2, color='red')
-# show(p)
-
-# working: (120, 25), (120, 32), (120, 40)
-# non-working combo's: (120, 60), (140, 60)
-
 # %% Test fixed pairing optimization idea
 from pbsig.vis import figure_dgm
-N = 50
 dgm1 = ripser(SW(n=N, d=M, tau=tau_opt))['dgms'][1]
 H1_pt = dgm1[np.argmax(np.diff(dgm1, axis=1))]
 # np.sum(np.isclose(pdist(SW(n=N, d=M, tau=tau_opt)), H1_pt[0], 1e-7))
@@ -83,23 +71,46 @@ show(figure_dgm(dgm1))
 
 # %% Somehow try to acquire the simplex pair 
 from spirit.apparent_pairs import SpectralRI
-N = 50
+N, M = 50, 2
 X = SW(n=N, d=M, tau=tau_opt)
 dX = pdist(X)
 RI = SpectralRI(n=N, max_dim=2)
-RI.construct(dX, p=0, apparent=True, discard=False, filter="flag")
-RI.construct(dX, p=1, apparent=True, discard=False, filter="flag")
+RI.construct(dX, p=0, apparent=False, discard=False, filter="flag")
+RI.construct(dX, p=1, apparent=False, discard=False, filter="flag")
 RI.construct(dX, p=2, apparent=True, discard=True, filter="flag")
-
-len(RI._status[2])
-from math import comb
-1 / comb(250,3)
 
 RI._D[0] = RI.boundary_matrix(0)
 RI._D[1] = RI.boundary_matrix(1)
 RI._D[2] = RI.boundary_matrix(2)
+a,b,c,d = 2.2,2.4,2.6,2.9
+RI.query(1, a,b,c,d, method="cholesky", summands=True)
+RI.query(1, a,b,c,d, method="cholesky", summands=False)
 
-## This works - Positive 
+RI._simplices[2] = cand_triangles
+RI._weights[2] = np.array([RI.cm.simplex_weight(t, 2) for t in cand_triangles])
+RI._status[2] = np.zeros(len(RI._weights[2]))
+RI._D[2] = boundary_matrix(2, cand_triangles, RI._simplices[1])
+RI.query(1, 3.0, 4.0, 6.0, 7.0, method="cholesky", summands=True)
+RI.query(1, 3.0, 4.0, 6.0, 7.0, method="cholesky", summands=False)
+
+## This should work but it doesn't
+from spirit.apparent_pairs import boundary_matrix
+cand_triangles = RI._simplices[2][RI._status[2] <= 0]
+RI._D[2] = boundary_matrix(2, cand_triangles, RI._simplices[1])
+# RI._D[2] = boundary_matrix(2, RI._simplices[2], pos_edges)
+# RI._D[2] = boundary_matrix(2, RI._simplices[2], pos_edges)
+RI.query(1, 3.0, 4.0, 6.0, 7.0, method="cholesky")
+# RI.query(1, 1.0, 2.0, 6.0, 7.0, method="cholesky")
+
+
+RI._simplices[2] = cand_triangles
+RI._weights[2] = np.array([RI.cm.simplex_weight(t, 2) for t in cand_triangles])
+RI._status[2] = np.zeros(len(RI._weights[2]))
+RI._D[2] = RI.boundary_matrix(2)
+RI.query(1, 1.0, 2.0, 6.0, 7.0, method="cholesky")
+
+
+## This works - save positive edges that aren't apparent pairs
 poss_cofacets = RI.cm.cofacets_merged(RI._simplices[1][RI._status[1] >= 0], 1)
 pos_triangles = RI._simplices[2][RI._status[2] > 0]
 # cand_triangles = np.flip(np.setdiff1d(poss_cofacets, pos_triangles))
@@ -109,7 +120,7 @@ RI._weights[2] = np.array([RI.cm.simplex_weight(t, 2) for t in cand_triangles])
 RI._status[2] = np.zeros(len(RI._weights[2]))
 RI._D[2] = RI.boundary_matrix(2)
 
-RI.query(1, 1.0, 2.0, 6.0, 7.0, method="cholesky")
+
 
 # only_unk_tris = RI._status[2] == 0
 # RI._simplices[2] = RI._simplices[2][only_unk_tris]

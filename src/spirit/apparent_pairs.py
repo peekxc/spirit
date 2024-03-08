@@ -254,11 +254,11 @@ class SpectralRI:
       return 0 
 
     ## First, check to see if the sub-matrix of interest consists solely of pivot entries 
-    is_pivot_rows = self._status[f][f_inc] < 0 # negative p-simplices 
-    is_pivot_cols = self._status[p][p_inc] < 0 # negative q-simplices
-    if np.all(is_pivot_rows) or np.all(is_pivot_cols):
-      print("apparent full rank shortcut taken")
-      return min(len(is_pivot_rows), len(is_pivot_cols))
+    # is_pivot_rows = self._status[f][f_inc] < 0 # negative p-simplices 
+    # is_pivot_cols = self._status[p][p_inc] < 0 # negative q-simplices
+    # if np.all(is_pivot_rows) or np.all(is_pivot_cols):
+    #   print("apparent full rank shortcut taken")
+    #   return min(len(is_pivot_rows), len(is_pivot_cols))
 
     ## Start with a matrix-free Up Laplacian operator 
     LA = self.lower_left(a, b, p, deflate=True, apparent=True)
