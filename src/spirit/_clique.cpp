@@ -339,86 +339,6 @@ struct CoboundaryGenerator {
   }
 };
 
-// template< std::input_or_output_iterator T > 
-struct CoboundaryRange {
-	
-  const index_t n;
-  const index_t r; 
-  const index_t p; 
-  CoboundaryRange(const index_t simplex, const index_t p_, const index_t n_) : n(n_), r(simplex), p(p_) {
-    if (BC.BT.size() <= size_t(p_ + 2) || BC.BT.at(0).size() < n){ 
-      BC.precompute(n, p_+2); 
-    } 
-  }
-  
-  struct CoboundaryIterator {
-    using iterator_category = std::forward_iterator_tag;
-    using difference_type = std::ptrdiff_t;
-    using value_type = index_t;
-    using pointer = index_t*;
-    using reference = index_t&;
-    
-    index_t j = 0; 
-	  index_t k = 0;
-    index_t idx_below = 0;
-		index_t idx_above = 0;
-    index_t cofacet_index = 0; 
-    CoboundaryIterator(index_t simplex, index_t dim, const index_t n) 
-    : j(n-1), k(dim+1), idx_below(simplex), idx_above(0) { 
-      cofacet_index = this->next();
-    }
-    
-    auto has_next() -> bool { 
-      return j >= k; 
-      // return j >= 0; 
-    }
-    auto next() noexcept -> index_t {
-      while ((static_cast< index_t >(BC.at(j,k)) <= idx_below)) {
-        idx_below -= BC.at(j, k);
-        idx_above += BC.at(j, k + 1);
-        --j;
-        --k;
-        assert(k != -1);
-      }
-      return idx_above + BC.at(j--, k + 1) + idx_below;
-    }
-    auto operator*() const noexcept -> index_t { 
-      // return idx_above + BC.at(j+1, k + 1) + idx_below;
-      return cofacet_index;
-    }
-    void operator++() noexcept {  
-      cofacet_index = this->next(); 
-      std::cout << "j = " << j << std::endl;
-      // while ((static_cast< index_t >(BC.at(j,k)) <= idx_below)) {
-      //   idx_below -= BC.at(j, k);
-      //   idx_above += BC.at(j, k + 1);
-      //   --j;
-      //   --k;
-      //   assert(k != -1);
-      // }
-      // cofacet_index = idx_above + BC.at(j--, k + 1) + idx_below;
-    }
-    // constexpr void operator--() noexcept { _it -= (dim+1); }
-    // bool operator!=(CoboundaryIterator o) const noexcept { 
-    //   return idx_above != o.idx_above || idx_below != o.idx_below || k != o.k || j != o.j; 
-    //   // return this->operator*() != o.operator*();
-    // }
-  };
-
-  [[nodiscard]]
-  auto begin() const noexcept {
-    return CoboundaryIterator(r, p, n);
-  }
-
-  [[nodiscard]]
-  auto end() const noexcept {
-    // has next <=> j >= k 
-    return CoboundaryIterator(0, 0, n);  // ensures j < k
-  }
-};
-
-
-
 
 
 // 
@@ -451,14 +371,16 @@ struct Cliqueser {
   }
 
   // Given simplex rank + its dimension, retrieve its vertices (store locally)
-  void simplex_vertices(const index_t simplex, const index_t dim, index_t* v_out) const {
-    vertices[15] = simplex; 
-    unrank_colex< false >(vertices.rbegin(), vertices.rbegin()+1, n, dim + 1, v_out);
-  }
+  // void simplex_vertices(const index_t simplex, const index_t dim, index_t* v_out) const {
+  //   vertices[15] = simplex; 
+  //   unrank_colex< false >(vertices.rbegin(), vertices.rbegin()+1, n, dim + 1, v_out);
+  // }
 
   // Overloaded: given simplex rank + its dimension, retrieve its vertices (store locally)
-  auto simplex_vertices(const index_t simplex, const index_t dim) const -> const index_t* {
-    simplex_vertices(simplex, dim, vertices.begin());
+  auto simplex_vertices(const index_t simplex, const index_t dim) const -> index_t* {
+    vertices[15] = simplex; 
+    unrank_colex< false >(vertices.rbegin(), vertices.rbegin()+1, n, dim + 1, vertices.begin());
+    // simplex_vertices(simplex, dim, vertices.begin());
     return vertices.data();
   }
 
@@ -466,7 +388,7 @@ struct Cliqueser {
   auto simplex_weight(const index_t simplex, const index_t dim) const -> float {
     // vertices[15] = simplex; 
     // unrank_colex< false >(vertices.rbegin(), vertices.rbegin()+1, n, dim + 1, vertices.begin());
-    const index_t* sv = simplex_vertices(simplex, dim);
+    index_t* sv = simplex_vertices(simplex, dim);
     return filter.simplex_index(sv, sv + dim + 1);
   }
 
@@ -514,38 +436,39 @@ struct Cliqueser {
     }
   }
   
-  template< bool collect_edges = true > 
-  void compute_H0(
-    std::vector< diameter_index_t >& edges,
-    std::vector< diameter_index_t >& pos_edges
-  ){
-    // First collect and sort all the edges <= the supplied threshold by weight / colex rank
-    auto edges = std::vector< IndexPair< float > >(); 
-    // edges.reserve(n * (n-1) / 2); 
-    filter.p_simplices([](index_t* b, index_t* e, float weight){
-      auto r = combinatorial::rank_colex_k(b, 2);
-      edges.push_back(std::make_pair(r, weight));
-    });
-    std::sort(edges.rbegin(), edges.rend(), GreaterPair< float >);
+  // template< bool collect_edges = true > 
+  // void compute_H0(
+  //   const float threshold, 
+  //   std::vector< IndexPair< float > >& edges,
+  //   std::vector< IndexPair< float > >& pos_edges
+  // ){
+  //   // First collect and sort all the edges <= the supplied threshold by weight / colex rank
+  //   auto edges = std::vector< IndexPair< float > >(); 
+  //   // edges.reserve(n * (n-1) / 2); 
+  //   filter.p_simplices(1, threshold, [](index_t* b, index_t* e, float weight){
+  //     auto r = combinatorial::rank_colex_k(b, 2);
+  //     edges.push_back(std::make_pair(r, weight));
+  //   });
+  //   std::sort(edges.rbegin(), edges.rend(), GreaterPair< float >);
     
-    // Sweep the edges to build the connected components
-    DisjointSet ds(n);
-    auto edge = std::array< index_t, 2 >{ 0, 0 };
-    for (auto e : edges) {
-      const index_t* edge = simplex_vertices(e, 1, edge.begin());
-      index_t u = ds.find(edge[0]);
-      index_t v = ds.find(edge[1]);
-      if (u != v) {
-        // The edge is joining two components <=> it's a pivot / negative pair
-        ds._union(u, v);
-      } else if (apparent_zero_cofacet(e, 1) == -1){
-        // The edge is already in connected component <=> it's a positive pair 
-        // If in addition it does not have an apparent zero cofacet, then we save it
-        columns_to_reduce.push_back(e);
-      }
-    }
-    // if (dim_max > 0) std::reverse(columns_to_reduce.begin(), columns_to_reduce.end());
-  }
+  //   // Sweep the edges to build the connected components
+  //   DisjointSet ds(n);
+  //   auto edge = std::array< index_t, 2 >{ 0, 0 };
+  //   for (auto e : edges) {
+  //     const index_t* edge = simplex_vertices(e, 1, edge.begin());
+  //     index_t u = ds.find(edge[0]);
+  //     index_t v = ds.find(edge[1]);
+  //     if (u != v) {
+  //       // The edge is joining two components <=> it's a pivot / negative pair
+  //       ds._union(u, v);
+  //     } else if (apparent_zero_cofacet(e, 1) == -1){
+  //       // The edge is already in connected component <=> it's a positive pair 
+  //       // If in addition it does not have an apparent zero cofacet, then we save it
+  //       pos_edges.push_back(e);
+  //     }
+  //   }
+  //   // if (dim_max > 0) std::reverse(columns_to_reduce.begin(), columns_to_reduce.end());
+  // }
 
   // Given a dim-dimensional simplex, find its lexicographically maximal cofacet with identical simplex weight
   auto zero_cofacet(index_t cns_rank, size_t dim) const -> index_t {
@@ -555,7 +478,7 @@ struct Cliqueser {
       const auto cofacet_weight = simplex_weight(cofacet, dim+1);
       if (cofacet_weight == c_weight){
         zero_cofacet = cofacet;
-        return false; 
+        return false; // end enum shortcut 
       }
       return true; 
     });
