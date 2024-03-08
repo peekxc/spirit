@@ -10,6 +10,8 @@ from math import comb
 from combin import comb_to_rank
 from spirit.apparent_pairs import clique_mod
 from scipy.spatial.distance import pdist 
+from pbsig.persistence import ph, low_entry
+from combin import comb_to_rank
 
 # dx = np.array([3,4,5,5,4,3])
 # S = sx.rips_complex(dx, p=3)
@@ -191,3 +193,155 @@ def test_coboundary_union():
   all_cofacets_true = np.flip(np.unique(np.ravel(all_cofacets)))
   all_cofacets_test = C.cofacets_merged(R,2)
   assert np.allclose(all_cofacets_true, all_cofacets_test)
+
+
+def test_neg_triangle_superset_logic():
+  from spirit.apparent_pairs import SpectralRI
+  # seed 43
+  for i in range(100):
+    np.random.seed(i)
+    X = np.random.uniform(size=(9,2))
+    dX = pdist(X)
+    RI = SpectralRI(n=len(X), max_dim=2)
+    RI.construct(dX, p=0, apparent=True, discard=False, filter="flag")
+    RI.construct(dX, p=1, apparent=True, discard=False, filter="flag")
+    RI.construct(dX, p=2, apparent=True, discard=False, filter="flag")
+
+    RI._D[0] = RI.boundary_matrix(0)
+    RI._D[1] = RI.boundary_matrix(1)
+    RI._D[2] = RI.boundary_matrix(2)
+
+    K = sx.rips_filtration(dX, radius=np.inf, p=2)
+    K = sx.RankFiltration(K)
+    K.order = 'reverse colex'
+    R,V = ph(K, output="RV")
+    dims = np.array([sx.dim(s) for i,s in K])
+    E_ranks = comb_to_rank(list(map(sx.Simplex, sx.faces(K,1))), n=sx.card(K,0), order='colex')
+    T_ranks = comb_to_rank(list(map(sx.Simplex, sx.faces(K,2))), n=sx.card(K,0), order='colex')
+
+    # (sx.boundary_matrix(K) @ V) - R
+    from pbsig.persistence import validate_decomp
+    assert validate_decomp(sx.boundary_matrix(K), R, V)
+
+    ## Test that the apparent pairs are indeed pivot pairs in R1
+    R1 = R[:,dims == 1][dims==0]
+    piv_true = low_entry(R1)
+    E_pivot_status = {s : s_status  for s, s_status in zip(RI._simplices[1], RI._status[1])}
+    piv_test = np.array([E_pivot_status[e] for e in E_ranks])
+    assert np.all(piv_true[piv_test > 0] == -1)
+
+    ## Test that the apparent pairs are indeed pivot pairs in R2
+    R2 = R[:,dims == 2][dims==1]
+    piv_true = low_entry(R2)
+    T_pivot_status = {s : s_status  for s, s_status in zip(RI._simplices[2], RI._status[2])}
+    piv_test = np.array([T_pivot_status[t] for t in T_ranks])
+    assert np.all(piv_true[piv_test > 0] == -1)
+
+    ## Test that all triangles that kill edges lie in the cofacets of the positive edges
+    ## Even this might not be guarenteed to be true? 
+    neg_triangles = T_ranks[low_entry(R2) != -1]
+    pos_edges = E_ranks[low_entry(R1) == -1]
+    PE_cofacets = RI.cm.cofacets_merged(pos_edges, 1)
+    assert len(np.intersect1d(PE_cofacets, neg_triangles)) == len(neg_triangles)
+
+    ## Test that all triangles that kill edges lie in one of two sets: 
+    ## 1. The negative triangles of the apparent (edge, triangle) pairs
+    ## 2. The cofacets of the positive non-apparent edges 
+    ## Ah: 2 is not necessarily true, because non-apparent edge pairs need not be killed by their cofacets
+    ## What if I knew exactly the 
+    ## edges past a, triangles <= d 
+    neg_ap_triangles = RI._status[1][RI._status[1] > 0]
+    unknown_edges = RI._simplices[1][RI._status[1] == 0]
+    nap_triangles = RI.cm.cofacets_merged(unknown_edges, 1)
+
+    neg_triangles_true = T_ranks[low_entry(R2) != -1]
+    neg_triangles_test = np.union1d(neg_ap_triangles, nap_triangles)
+    unknown_triangles = np.setdiff1d(neg_triangles_true, neg_triangles_test)
+    assert len(unknown_triangles) == 0, "Negative triangle superset logic failed"
+
+    ## Investigate the unknown triangles 
+    assert 66 not in RI._simplices[1] # thus its not an apparent cofacet 
+    assert RI.cm.apparent_zero_facet(66, 2) == -1 # double-check its not an apparent cofacet
+
+    ## check out which edge it killed 
+    e_unknown = E_ranks[low_entry(R2[:,T_ranks == 66])]
+    assert e_unknown not in unknown_edges
+
+    assert e_unknown not in RI._simplices[1][RI._status[1] > 0], "edge is literally a positive simplex"
+    t_ap_cofacet = RI._status[1][RI._simplices[1] == e_unknown]
+
+    ## The cofacet search suggests (11, 67) is an apparent pair, but the reduction suggests its (11, 66)
+    ## But the E_pivot_check was satified
+    RI.cm.apparent_zero_cofacet(11, 1)
+    RI.cm.apparent_zero_facet(66,2)
+    RI.cm.apparent_zero_facet(67,2)
+    assert E_pivot_status[11] == 67
+    low_entry(R2)[T_ranks == 66]
+
+    ## Sanity check: check cofacets of 11, find the apparent one
+    ## Whoa, there is no 66 in the cofacets of 11...
+    ## 11 -> (1,5)
+    ## 66 -> (0,5,8)
+    ## 67 -> (1,5,8)
+    ## So 67 is indeed the first cofacet with diam >= f(11)
+    ## reduction says 66 is a pivot though 
+    diam_f = sx.flag_filter(dX)
+    edge = rank_to_comb(11, k=2, n=len(X), order='colex')
+    c_indices = np.setdiff1d(range(len(X)), edge)
+    cofacets_c = np.array([np.sort(edge + (c,)) for c in c_indices])
+    cofacets_r = comb_to_rank(cofacets_c, k=3, n=len(X), order='colex')
+    cofacets_c = cofacets_c[np.argsort(-cofacets_r)]
+    cofacets_r = cofacets_r[np.argsort(-cofacets_r)]
+    assert np.all(comb_to_rank(cofacets_c, k=3, n=len(X), order='colex') == cofacets_r)
+    birth_time = diam_f(edge)
+    death_times = diam_f(cofacets_c)
+
+    ## Ensure the filtration is reverse-colexicographically filtered
+    t_diams = diam_f(sx.faces(K,2))
+    t_ranks = comb_to_rank(sx.faces(K,2), order='colex', n=len(X))
+    for diam in np.unique(t_diams):
+      class_ind = np.flatnonzero(t_diams == diam)
+      if len(class_ind) == 1: 
+        continue 
+      assert np.all(np.argsort(np.flip(t_ranks[class_ind])) == np.arange(len(class_ind)))
+
+    ## Let's ensure they're symmetric
+    assert RI.cm.apparent_zero_cofacet(11, 1) == 67
+    assert RI.cm.apparent_zero_facet(67, 2) == 11
+    rank_to_comb(T_ranks, k=3, n=len(X), order='colex')
+
+    ## Let's check out the boundary matrix
+    ## tri 66 is at index 9, is not apparent, as expected 
+    ## edge 11 is at index 23, which is far enough that there's no way 66 touches it, because low(66) == 16
+    ## R2.todense()[:24,:10] % 2
+    ## so low(< triangle 66 >) == < index 11 > but not the edge rank 11...
+
+def test_neg_triangle_superset_logic():
+  theta = np.linspace(0, 2*np.pi, 50, endpoint=False)
+  X = np.c_[np.cos(theta), np.sin(theta)]
+  dX = pdist(X)
+  RI = SpectralRI(n=len(X), max_dim=2)
+  RI.construct(dX, p=0, apparent=True, discard=False, filter="flag")
+  RI.construct(dX, p=1, apparent=True, discard=False, filter="flag")
+  RI.construct(dX, p=2, apparent=True, discard=False, filter="flag")
+
+  RI._D[0] = RI.boundary_matrix(0)
+  RI._D[1] = RI.boundary_matrix(1)
+  RI._D[2] = RI.boundary_matrix(2)
+  
+  ## Test that all triangles that kill edges lie in the cofacets of the positive edges
+  ## Even this might not be guarenteed to be true? 
+  neg_triangles = RI._simplices[2][RI._status[2] <= 0]
+  pos_edges = RI._simplices[1][RI._status[1] >= 0]
+  PE_cofacets = RI.cm.cofacets_merged(pos_edges, 1)
+  assert len(np.intersect1d(PE_cofacets, neg_triangles)) == len(neg_triangles)
+
+  ## Try to restrict pos_edges even more
+  apparent_triangles = RI.cm.apparent_zero_cofacets(pos_edges, 1)
+  pos_nap_edges = pos_edges[apparent_triangles == -1]
+  negz_edges = RI._simplices[1][RI._status[1] <= 0]
+  other_edges = np.flip(np.union1d(negz_edges, pos_nap_edges))
+  assert len(np.intersect1d(RI.cm.cofacets_merged(other_edges, 1), neg_triangles)) == len(neg_triangles)
+
+
+

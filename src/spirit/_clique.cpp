@@ -116,20 +116,25 @@ struct FlagFilter {
   void p_simplices(const size_t p, const T threshold, Lambda&& f) const{
     auto vertices = std::vector< size_t >(n, 0);
     std::iota(vertices.rbegin(), vertices.rend(), 0);
-    combinatorial::for_each_combination(vertices.begin(), vertices.begin()+(p+1), vertices.end(), [&](auto b, auto e){
-      auto s_weight = simplex_index(b, e);
-      if (s_weight <= threshold){
-        f(b, e, s_weight);
-      }
-      return false; 
-    });
+    if (p == 1){
+      index_t i = 0; 
+      combinatorial::for_each_combination(vertices.begin(), vertices.begin()+2, vertices.end(), [&](auto b, auto e){
+        auto s_weight = weights[i++]; // simplex_index(b, e);
+        if (s_weight <= threshold){
+          f(b, e, s_weight);
+        }
+        return false; 
+      });
+    } else {
+      combinatorial::for_each_combination(vertices.begin(), vertices.begin()+(p+1), vertices.end(), [&](auto b, auto e){
+        auto s_weight = simplex_index(b, e);
+        if (s_weight <= threshold){
+          f(b, e, s_weight);
+        }
+        return false; 
+      });
+    }
   }
-
-  // Given index of simplex S, its weight, and the vertex id 'v' of face F = S - {v}
-  // auto facet_weight(){
-
-  // }
-
 };
 
 
@@ -243,8 +248,15 @@ using IndexPair = std::pair< index_t, T >;
 
 template< typename T >
 struct LessPair {
-  bool operator ()(const IndexPair< T >& p1, const IndexPair< T >& p2) const { 
+  bool operator()(const IndexPair< T >& p1, const IndexPair< T >& p2) const { 
     return p1.second == p2.second ? p1.first < p2.first : p1.second < p2.second;
+  }
+};
+
+template< typename T >
+struct GreaterPair {
+  bool operator()(const IndexPair< T >& p1, const IndexPair< T >& p2) const { 
+    return p1.second == p2.second ? p1.first < p2.first : p1.second > p2.second;
   }
 };
 
@@ -439,9 +451,14 @@ struct Cliqueser {
   }
 
   // Given simplex rank + its dimension, retrieve its vertices (store locally)
-  auto simplex_vertices(const index_t simplex, const index_t dim) const -> const index_t* {
+  void simplex_vertices(const index_t simplex, const index_t dim, index_t* v_out) const {
     vertices[15] = simplex; 
-    unrank_colex< false >(vertices.rbegin(), vertices.rbegin()+1, n, dim + 1, vertices.begin());
+    unrank_colex< false >(vertices.rbegin(), vertices.rbegin()+1, n, dim + 1, v_out);
+  }
+
+  // Overloaded: given simplex rank + its dimension, retrieve its vertices (store locally)
+  auto simplex_vertices(const index_t simplex, const index_t dim) const -> const index_t* {
+    simplex_vertices(simplex, dim, vertices.begin());
     return vertices.data();
   }
 
@@ -500,28 +517,30 @@ struct Cliqueser {
   template< bool collect_edges = true > 
   void compute_H0(
     std::vector< diameter_index_t >& edges,
-    std::vector< diameter_index_t >& columns_to_reduce
+    std::vector< diameter_index_t >& pos_edges
   ){
-    DisjointSet ds(n);
-
-    // First collect and sort all the edges <= the supplied threshold
-    std::vector< index_t > edges; 
-    edges.reserve(n * (n-1) / 2); // TODO: should I do this?
-    filter.p_simplices([](index_t e){
-      edges.push_back(e);
+    // First collect and sort all the edges <= the supplied threshold by weight / colex rank
+    auto edges = std::vector< IndexPair< float > >(); 
+    // edges.reserve(n * (n-1) / 2); 
+    filter.p_simplices([](index_t* b, index_t* e, float weight){
+      auto r = combinatorial::rank_colex_k(b, 2);
+      edges.push_back(std::make_pair(r, weight));
     });
-    std::sort(edges.rbegin(), edges.rend(), );
+    std::sort(edges.rbegin(), edges.rend(), GreaterPair< float >);
     
+    // Sweep the edges to build the connected components
+    DisjointSet ds(n);
     auto edge = std::array< index_t, 2 >{ 0, 0 };
     for (auto e : edges) {
-      get_simplex_vertices(get_index(e), 1, n, edge.rbegin());
-      index_t u = dset.find(edge[0]);
-      index_t v = dset.find(edge[1]);
+      const index_t* edge = simplex_vertices(e, 1, edge.begin());
+      index_t u = ds.find(edge[0]);
+      index_t v = ds.find(edge[1]);
       if (u != v) {
-        dset.link(u, v);
-      } else if (apparent_zero_facet(e, 1) == -1){
-        // If the edge is not a negative simplex (not a pivot), it's in the 
-        // nullspace of delta_1 and thus also the image of delta_2
+        // The edge is joining two components <=> it's a pivot / negative pair
+        ds._union(u, v);
+      } else if (apparent_zero_cofacet(e, 1) == -1){
+        // The edge is already in connected component <=> it's a positive pair 
+        // If in addition it does not have an apparent zero cofacet, then we save it
         columns_to_reduce.push_back(e);
       }
     }
