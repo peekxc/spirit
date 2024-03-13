@@ -7,8 +7,9 @@ def midpoint(i: int, j: int) -> int:
   return (i + j) // 2
 
 def _generate_boxes(i: int, j: int, res: dict = {}, index: int = 0):
-  """Recursively generates the """
-  r = (i, (i+j) // 2, (i+j) // 2 + 1, j)
+  """Recursively generates boxes in DFS fashion"""
+  r = (i, (i+j) // 2, (i+j) // 2 + 1, j) # Chens version
+  r = (i, (i+j) // 2, (i+j) // 2, j)     # Modified version
   res[index] = r
   if abs(i-j) <= 1: 
     return  
@@ -17,6 +18,7 @@ def _generate_boxes(i: int, j: int, res: dict = {}, index: int = 0):
     _generate_boxes((i+j) // 2, j, res, 2*index + 2)
 
 def _generate_bfs(i: int, j: int):
+  """Generates a level-order indexed set of boxes on the bisection in via iterative BFS."""
   res, d, index = {}, deque(), 0
   d.appendleft((i,j))
   while len(d) > 0:
@@ -24,7 +26,8 @@ def _generate_bfs(i: int, j: int):
     if abs(i-j) <= 1: 
       continue
     else:
-      r = (i, (i+j) // 2, (i+j) // 2 + 1, j)
+      # r = (i, (i+j) // 2, (i+j) // 2 + 1, j) #s chen version 
+      r = (i, (i+j) // 2, (i+j) // 2, j) # modified version
       res[index] = r
       d.appendleft((i, (i+j) // 2))
       d.appendleft(((i+j) // 2, j))
@@ -48,7 +51,7 @@ def get_index(k: int, i: int, j: int):
   return i,j
 
 
-def bisection_tree(i1, i2, j1, j2, mu: int, query_fun: Callable, creators: dict = {}, verbose: bool = False):
+def bisection_tree(i1, i2, j1, j2, mu: int, query_fun: Callable, creators: dict = {}, verbose: bool = False, validate: bool = True):
   if verbose: 
     print(f"({i1},{i2},{j1},{j2}) = {mu}")
   if mu == 0: 
@@ -63,13 +66,13 @@ def bisection_tree(i1, i2, j1, j2, mu: int, query_fun: Callable, creators: dict 
     mid = midpoint(i1, i2)
     mu_L = query_fun(i1, mid, j1, j2)
     mu_R = mu - mu_L 
-    mu_R_test = query_fun(mid, i2, j1, j2)
+    mu_R_test = query_fun(mid, i2, j1, j2) if validate else mu_R 
     if mu_R != mu_R_test:
       ## Invariant to keep: mu([i1, mid] x [j1, j2]) + mu([mid,i2] x [j1,j2]) = mu([i1,i2,j1,j2])
       msg = f"Invalid query oracle: mu={mu} (veri: {query_fun(i1,i2,j1,j2)}) on [{i1},{i2}]x[{j1},{j2}] should be L:{mu_L} from [{i1},{mid}]x[{j1},{j2}] + R:{mu_R} from [{mid},{i2}]x[{j1},{j2}] (got L:{mu_L} R:{mu_R_test})"
       raise ValueError(msg)
-    bisection_tree(i1, mid, j1, j2, mu_L, query_fun, creators)
-    bisection_tree(mid, i2, j1, j2, mu_R, query_fun, creators)
+    bisection_tree(i1, mid, j1, j2, mu_L, query_fun, creators, verbose)
+    bisection_tree(mid, i2, j1, j2, mu_R, query_fun, creators, verbose)
     # bisection_tree(mid+1, i2, j1, j2, mu_R, query_fun, creators)
   return creators
 
@@ -114,7 +117,15 @@ def ph_pairs(K: sx.ComplexLike, p: int, query: Callable):
   boxes = {}
   _generate_bfs(0, m, boxes) ## todo: remove and replace with log(n) indexing function
   a, b = 0, len(K)
-  query(a, midpoint(a,b), midpoint(a,b)+1, b)
+  # query(a, midpoint(a,b), midpoint(a,b), b)
+
+def _index_persistence(K: sx.FiltrationLike, **kwargs):
+  from pbsig.persistence import ph
+  K = sx.RankFiltration(K)
+  K.order = 'reverse colex'
+  K_index = sx.RankFiltration({i:s for i,(d,s) in enumerate(K)}.items())
+  dgms_index = ph(K_index, simplex_pairs=True)
+  return dgms_index
 
 ## TODO: 
 # 1. Write Points-in-box function (bisection tree + destroyer)

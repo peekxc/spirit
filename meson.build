@@ -36,7 +36,8 @@ _cpp_args = compiler.get_supported_arguments(
   '-fPIC', 
   '-Wno-sign-compare',
   '-fvisibility=hidden',
-  '-Wno-deprecated-anon-enum-enum-conversion'
+  '-Wno-deprecated-anon-enum-enum-conversion', 
+  '-g' # debugging info
 )
 _cpp_args += compiler.get_supported_arguments('-std=c++20')
 

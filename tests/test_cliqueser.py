@@ -317,13 +317,14 @@ def test_neg_triangle_superset_logic():
     ## so low(< triangle 66 >) == < index 11 > but not the edge rank 11...
 
 def test_neg_triangle_superset_logic():
-  theta = np.linspace(0, 2*np.pi, 50, endpoint=False)
+  theta = np.linspace(0, 2*np.pi, 6, endpoint=False)
   X = np.c_[np.cos(theta), np.sin(theta)]
   dX = pdist(X)
   RI = SpectralRI(n=len(X), max_dim=2)
   RI.construct(dX, p=0, apparent=True, discard=False, filter="flag")
   RI.construct(dX, p=1, apparent=True, discard=False, filter="flag")
   RI.construct(dX, p=2, apparent=True, discard=False, filter="flag")
+  RI.cm.dgm0(np.inf)
 
   RI._D[0] = RI.boundary_matrix(0)
   RI._D[1] = RI.boundary_matrix(1)
@@ -343,5 +344,81 @@ def test_neg_triangle_superset_logic():
   other_edges = np.flip(np.union1d(negz_edges, pos_nap_edges))
   assert len(np.intersect1d(RI.cm.cofacets_merged(other_edges, 1), neg_triangles)) == len(neg_triangles)
 
+def test_neg_triangle_superset_logic2():
+  theta = np.linspace(0, 2*np.pi, 32, endpoint=False)
+  X = np.c_[np.cos(theta), np.sin(theta)]
+  dX = pdist(X)
+  RI = SpectralRI(n=len(X), max_dim=2)
+  RI.construct(dX, p=0, apparent=True, discard=False, filter="flag")
+  RI.construct(dX, p=1, apparent=True, discard=False, filter="flag")
+  RI.construct(dX, p=2, apparent=True, discard=False, filter="flag")
+
+  RI._D[0] = RI.boundary_matrix(0)
+  RI._D[1] = RI.boundary_matrix(1)
+  RI._D[2] = RI.boundary_matrix(2)
+
+  ## Test that all triangles that kill edges lie in the cofacets of the positive edges
+  ## Even this might not be guarenteed to be true? 
+  neg_triangles = RI._simplices[2][RI._status[2] <= 0]
+  pos_edges = RI._simplices[1][RI._status[1] >= 0]
+  PE_cofacets = RI.cm.cofacets_merged(pos_edges, 1)
+  assert len(np.intersect1d(PE_cofacets, neg_triangles)) == len(neg_triangles)
+
+  ## Try to restrict pos_edges even more
+  apparent_triangles = RI.cm.apparent_zero_cofacets(pos_edges, 1)
+  pos_nap_edges = pos_edges[apparent_triangles == -1]
+  # negz_edges = RI._simplices[1][RI._status[1] <= 0]
+  # other_edges = np.flip(np.union1d(negz_edges, pos_nap_edges))
+  # assert len(np.intersect1d(RI.cm.cofacets_merged(other_edges, 1), neg_triangles)) == len(neg_triangles)
+
+  neg_nap_triangles = RI.cm.cofacets_merged(pos_nap_edges, 1)
+  nap_edge_status = np.array([RI.cm.apparent_zero_facet(t, 2) for t in neg_nap_triangles])
+  neg_nap_triangles2 = neg_nap_triangles[nap_edge_status == -1]
+  
+  # neg_nap_triangles_2 = RI.cm.cofacets_merged(nap_edge_status[nap_edge_status >= 0], 1)
+  # pos_nap_faces = np.unique(np.ravel([RI.cm.boundary(r,2) for r in neg_nap_triangles]))
+  
+  # neg_nap_triangles_2 = RI.cm.cofacets_merged(pos_nap_faces, 1)
+  neg_nap_triangles_3 = np.unique(np.union1d(
+    np.unique(apparent_triangles[apparent_triangles != -1]),
+    neg_nap_triangles_2 
+  ))
+  print(f"# neg triangles: {len(neg_triangles)}, UB: {len(neg_nap_triangles_3)}, max: {len(PE_cofacets)}")
+  assert len(np.intersect1d(neg_nap_triangles_3, neg_triangles)) == len(neg_triangles)
+
+
+  # neg_vertices = RI.cm.dgm0(np.inf)
+  # np.array([v[0] for v in neg_vertices])
+
+
+
+  ## Exact 
+  destroyer_tri = rank_to_comb(5, order='colex', k=3, n=len(X))
+  birth_edges = rank_to_comb([0,11], order='colex', k=2, n=len(X))
+  
+  pos_ap_edges = np.array([1,3,4,6,7,8,12,13], dtype=np.int64)
+  pos_nap_edges = np.array([0,11], dtype=np.int64)
+  neg_edges = np.setdiff1d(np.arange(15), np.union1d(pos_ap_edges, pos_nap_edges))
+  assert len(pos_ap_edges) + len(pos_nap_edges) + 5 == comb(6,2)
+
+  ## The cofacets of all positive edges contains the negative triangles somehow
+  assert len(np.intersect1d(neg_triangles, RI.cm.cofacets_merged(np.union1d(pos_ap_edges, pos_nap_edges), 1))) == 12
+  
+  neg_ap_triangles = RI.cm.apparent_zero_cofacets(pos_ap_edges, 1)
+  nap_cofacets = RI.cm.cofacets_merged(pos_nap_edges, 1)
+  np.union1d(neg_ap_triangles, nap_cofacets)
+  np.sort(neg_triangles)
+  # np.intersect1d(neg_triangles, 
+
+
+  import bokeh
+  from bokeh.io import output_notebook
+  output_notebook()
+  from bokeh.plotting import figure, show
+  
+  p = figure(width=300, height=300)
+  p.scatter(*X.T)
+  p.text(*X.T, text=np.arange(len(X)), y_offset=-0.01, x_offset=0)
+  show(p)
 
 

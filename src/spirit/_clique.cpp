@@ -102,15 +102,45 @@ struct FlagFilter {
   auto simplex_index(Iter b, Iter e) const -> T {
     T s_weight = std::numeric_limits< T >::min();
     if (std::distance(b, e) <= 1){ return s_weight; }
-    combinatorial::for_each_combination(b, b+2, e, [this, &s_weight](auto b, [[maybe_unused]] auto e){
-      s_weight = std::max(
-        s_weight, 
-        weights.at(combinatorial::rank_lex_2(*b, *(b+1), n))
-      ); 
-      return false; 
-    });
+    // TODO: revamp using just bare for loops and get rid of .at()
+    const size_t N = std::distance(b, e);
+    for (size_t i = 0; i < N; i++){
+      for (size_t j = i+1; j < N; ++j){
+        s_weight = std::max(s_weight, weights[combinatorial::rank_lex_2(b[i], b[j], n)]); 
+      }
+    }
+    // combinatorial::for_each_combination(b, b+2, e, [this, &s_weight](auto b, [[maybe_unused]] auto e){
+    //   s_weight = std::max(
+    //     s_weight, weights[combinatorial::rank_lex_2(*b, *(b+1), n)]
+    //   ); 
+    //   return false; 
+    // });
     return s_weight;
+  };
+
+  template< size_t dim, typename Iter >
+  [[nodiscard]]
+  constexpr auto simplex_index(Iter b, Iter e) const noexcept -> T {
+    using combinatorial::rank_lex_2;
+    if constexpr(dim == 1){
+      return weights[rank_lex_2(b[0], b[1], n)];
+    } else if constexpr(dim == 2){
+      return std::max(std::max(
+           weights[rank_lex_2(b[0], b[1], n)], 
+           weights[rank_lex_2(b[0], b[2], n)]
+        ), weights[rank_lex_2(b[1], b[2], n)]
+      );
+    } else {
+      T s_weight = std::numeric_limits< T >::min();
+      const size_t N = std::distance(b, e);
+      for (size_t i = 0; i < N; i++){
+        for (size_t j = i+1; j < N; ++j){
+          s_weight = std::max(s_weight, weights[combinatorial::rank_lex_2(b[i], b[j], n)]); 
+        }
+      }
+    }
   }
+
 
   template< typename Lambda > 
   void p_simplices(const size_t p, const T threshold, Lambda&& f) const{
@@ -120,6 +150,14 @@ struct FlagFilter {
       index_t i = 0; 
       combinatorial::for_each_combination(vertices.begin(), vertices.begin()+2, vertices.end(), [&](auto b, auto e){
         auto s_weight = weights[i++]; // simplex_index(b, e);
+        if (s_weight <= threshold){
+          f(b, e, s_weight);
+        }
+        return false; 
+      });
+    } else if (p == 2){
+      combinatorial::for_each_combination(vertices.begin(), vertices.begin()+3, vertices.end(), [&](auto b, auto e){
+        auto s_weight = simplex_index< 2 >(b, e);
         if (s_weight <= threshold){
           f(b, e, s_weight);
         }
@@ -371,10 +409,10 @@ struct Cliqueser {
   }
 
   // Given simplex rank + its dimension, retrieve its vertices (store locally)
-  // void simplex_vertices(const index_t simplex, const index_t dim, index_t* v_out) const {
-  //   vertices[15] = simplex; 
-  //   unrank_colex< false >(vertices.rbegin(), vertices.rbegin()+1, n, dim + 1, v_out);
-  // }
+  void simplex_vertices(const index_t simplex, const index_t dim, index_t* v_out) const {
+    vertices[15] = simplex; 
+    unrank_colex< false >(vertices.rbegin(), vertices.rbegin()+1, n, dim + 1, v_out);
+  }
 
   // Overloaded: given simplex rank + its dimension, retrieve its vertices (store locally)
   auto simplex_vertices(const index_t simplex, const index_t dim) const -> index_t* {
@@ -436,39 +474,90 @@ struct Cliqueser {
     }
   }
   
-  // template< bool collect_edges = true > 
-  // void compute_H0(
-  //   const float threshold, 
-  //   std::vector< IndexPair< float > >& edges,
-  //   std::vector< IndexPair< float > >& pos_edges
-  // ){
-  //   // First collect and sort all the edges <= the supplied threshold by weight / colex rank
-  //   auto edges = std::vector< IndexPair< float > >(); 
-  //   // edges.reserve(n * (n-1) / 2); 
-  //   filter.p_simplices(1, threshold, [](index_t* b, index_t* e, float weight){
-  //     auto r = combinatorial::rank_colex_k(b, 2);
-  //     edges.push_back(std::make_pair(r, weight));
-  //   });
-  //   std::sort(edges.rbegin(), edges.rend(), GreaterPair< float >);
+  template< bool collect_edges = true > 
+  void compute_H0(
+    const float threshold, 
+    std::vector< IndexPair< float > >& edges,
+    std::vector< IndexPair< float > >& pos_edges
+  ) const {
+    // First collect and sort all the edges <= the supplied threshold by weight / colex rank
+    filter.p_simplices(1, threshold, [&edges](auto b, auto e, float weight){
+      auto r = combinatorial::rank_colex_k(b, 2);
+      edges.push_back(std::make_pair(r, weight));
+    });
+    std::sort(edges.rbegin(), edges.rend(), GreaterPair< float >());
     
-  //   // Sweep the edges to build the connected components
-  //   DisjointSet ds(n);
-  //   auto edge = std::array< index_t, 2 >{ 0, 0 };
-  //   for (auto e : edges) {
-  //     const index_t* edge = simplex_vertices(e, 1, edge.begin());
-  //     index_t u = ds.find(edge[0]);
-  //     index_t v = ds.find(edge[1]);
-  //     if (u != v) {
-  //       // The edge is joining two components <=> it's a pivot / negative pair
-  //       ds._union(u, v);
-  //     } else if (apparent_zero_cofacet(e, 1) == -1){
-  //       // The edge is already in connected component <=> it's a positive pair 
-  //       // If in addition it does not have an apparent zero cofacet, then we save it
-  //       pos_edges.push_back(e);
-  //     }
-  //   }
-  //   // if (dim_max > 0) std::reverse(columns_to_reduce.begin(), columns_to_reduce.end());
-  // }
+    // Sweep the edges to build the connected components
+    DisjointSet ds(n);
+    auto edge = std::array< index_t, 2 >{ 0, 0 };
+    for (auto e : edges) {
+      simplex_vertices(e.first, 1, edge.begin());
+      index_t u = ds._find(edge[0]); // unsafe find
+      index_t v = ds._find(edge[1]); // unsafe find
+      if (u != v) {
+        ds._union(u, v); // Join two components <=> pivot / negative pair
+      } else {
+        // The edge is already in connected component <=> it's a positive pair 
+        // If in addition it does not have an apparent zero cofacet, then we save it
+        pos_edges.push_back(e);
+        if (apparent_zero_cofacet(e.first, 1) == -1){
+          std::cout << "e: " << e.first << " is non-apparent" << std::endl;
+        }
+      }
+    }
+    // if (dim_max > 0) std::reverse(columns_to_reduce.begin(), columns_to_reduce.end());
+  }
+
+
+	//  entry_hash_map& pivot_column_index,
+  // void compute_pairs(
+  //   const std::vector< diameter_index_t >& columns_to_reduce, 
+  //   const index_t dim
+  // ) {
+	// 	compressed_sparse_matrix< diameter_entry_t > reduction_matrix;
+	
+	// 	for (size_t idx_col = 0; idx_col < columns_to_reduce.size(); ++idx_col) {
+	// 		diameter_entry_t column_to_reduce(columns_to_reduce[idx_col], 1);
+	// 		value_t diameter = get_diameter(column_to_reduce);
+	// 		reduction_matrix.append_column();
+	// 		std::priority_queue<diameter_entry_t, std::vector<diameter_entry_t>,
+	// 		                    greater_diameter_or_smaller_index_comp<diameter_entry_t>>
+  //       working_reduction_column, working_coboundary;
+
+	// 		diameter_entry_t e, pivot = init_coboundary_and_get_pivot(column_to_reduce, working_coboundary, dim, pivot_column_index);
+
+	// 		while (true) {
+	// 			if (get_index(pivot) != -1) {
+	// 				auto pair = pivot_column_index.find(get_entry(pivot));
+	// 				if (pair != pivot_column_index.end()) {
+	// 					entry_t other_pivot = pair->first;
+	// 					index_t index_column_to_add = pair->second;
+	// 					coefficient_t factor =
+	// 					    modulus - get_coefficient(pivot) *
+	// 					                  multiplicative_inverse[get_coefficient(other_pivot)] %
+	// 					                  modulus;
+	// 					add_coboundary(reduction_matrix, columns_to_reduce, index_column_to_add,
+	// 					               factor, dim, working_reduction_column, working_coboundary);
+	// 					pivot = get_pivot(working_coboundary);
+	// 				} else if (get_index(e = get_zero_apparent_facet(pivot, dim + 1)) != -1) {
+	// 					set_coefficient(e, modulus - get_coefficient(e));
+	// 					add_simplex_coboundary(e, dim, working_reduction_column, working_coboundary);
+	// 					pivot = get_pivot(working_coboundary);
+	// 				} else {
+	// 					pivot_column_index.insert({get_entry(pivot), index_column_to_reduce});
+
+	// 					while (true) {
+	// 						diameter_entry_t e = pop_pivot(working_reduction_column);
+	// 						if (get_index(e) == -1) break;
+	// 						assert(get_coefficient(e) > 0);
+	// 						reduction_matrix.push_back(e);
+	// 					}
+	// 					break;
+	// 				}
+	// 			} else {
+	// }
+
+
 
   // Given a dim-dimensional simplex, find its lexicographically maximal cofacet with identical simplex weight
   auto zero_cofacet(index_t cns_rank, size_t dim) const -> index_t {
@@ -562,6 +651,12 @@ void _clique_wrapper(py::module& m, std::string suffix, Lambda&& init){
 		}))
     .def("init", init)
     .def_readonly("n_vertices", &FT::n)
+    .def("dgm0", [](const FT& M, const float threshold){
+      auto edges = std::vector< IndexPair< float > >();
+      auto pos_edges = std::vector< IndexPair< float > >();
+      M.compute_H0(threshold, edges, pos_edges);
+      return py::cast(pos_edges);
+    })
     .def("simplex_weight", &FT::simplex_weight)
     .def("boundary", [](const FT& M, const index_t cns_rank, const size_t dim) -> py_array< index_t > {
       auto facet_ranks = std::vector< index_t >();
@@ -682,7 +777,7 @@ void _clique_wrapper(py::module& m, std::string suffix, Lambda&& init){
       });
       return py::cast(cofacets);
     })
-    // Constructs the -psimplices + weights in the filtration up to a given threshold, optionally checking to see if 
+    // Constructs the p-simplices + weights in the filtration up to a given threshold, optionally checking to see if 
     // each simplex participates in an apparent pair as a positive or negative simplex
     .def("build", [](const FT& M, const size_t p, const float threshold, bool check_pos = false, bool check_neg = false, const bool filter_pos = false){
       auto p_simplices = std::vector< index_t >();
@@ -715,17 +810,11 @@ void _clique_wrapper(py::module& m, std::string suffix, Lambda&& init){
       }
       M.filter.p_simplices(p, threshold, [p, filter_pos, &apparent_check, &p_simplices, &p_weights, &p_status](auto b, [[maybe_unused]] auto e, const float w){
         const auto r = combinatorial::rank_colex_k(b, p+1); // assumes b in reverse order
-        const auto af = apparent_check(r);
-        if (!filter_pos){
+        const auto af = apparent_check(r); // returns {-c, 0, +c}
+        if (!filter_pos || af <= 0){
           p_simplices.push_back(r);
           p_weights.push_back(w);
           p_status.push_back(af);
-        } else {
-          if (af <= 0){
-            p_simplices.push_back(r);
-            p_weights.push_back(w);
-            p_status.push_back(af);
-          }
         }
       });
       py_array< index_t > ps_out_(p_simplices.size(), p_simplices.data());

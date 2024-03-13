@@ -11,6 +11,7 @@ from itertools import combinations
 from combin import rank_to_comb, comb_to_rank
 
 from typing import * 
+from .query import points_in_box, bisection_tree
 
 ## from: https://stackoverflow.com/questions/4110059/pythonor-numpy-equivalent-of-match-in-r
 def index_of(a: List[Hashable], b: List[Hashable], default: Any = None) -> List[int]:
@@ -83,8 +84,14 @@ class UpLaplacian(LinearOperator):
     WP = dia_matrix((np.array([self.wp]), [0]), shape=(n,n))
     WQ = dia_matrix((np.array([self.wq]), [0]), shape=(m,m))
     return WP @ self.D @ WQ @ self.D.T @ WP
+  
+  # TODO: to do this efficiently, really need a fast index remapper {0, 4, 5, 6, 6, 7} -> {0, 1, 2, 3, 3, 4}
+  # def lower_left(self, a: float, b: float):
+  #   """Partitions underlying boundary operator to reflect D[a:, :(b+1)]"""
+  #   np.argpartition()
+  #   self.wp >= a
 
-def boundary_matrix(p: int, p_simplices: np.ndarray, f_simplices: np.ndarray = [], dtype=np.int8):
+def boundary_matrix(p: int, p_simplices: np.ndarray, f_simplices: np.ndarray = [], dtype=np.int8, n: int = None):
   """
   p = dimension of the p-simplices
   p_simplices = colex ranks of the p-simplices
@@ -97,7 +104,7 @@ def boundary_matrix(p: int, p_simplices: np.ndarray, f_simplices: np.ndarray = [
     raise ValueError("Not supported yet")
   if card_p == 0 or card_f == 0: 
     return np.empty(shape=(card_f, card_p), dtype=dtype)
-  n = np.max(rank_to_comb(np.max(p_simplices), order='colex', k=p+1)) + 1
+  n = np.max(rank_to_comb(np.max(p_simplices), order='colex', k=p+1)) + 1 if n is None else n
   d, (ri,ci) = clique_mod.build_coo(n, p, p_simplices, f_simplices)
   D = coo_matrix((d, (ri,ci)), shape=(card_f, card_p), dtype=dtype)
   return D
@@ -212,7 +219,6 @@ class SpectralRI:
 
     ## This seems safe from a rank perspective
     f = p - 1
-    ri, ci = self._D[p].row, self._D[p].col
     f_inc = np.logical_and(self._weights[f] >= i, self._weights[f] <= j)
     p_inc = np.logical_and(self._weights[p] >= i, self._weights[p] <= j)
     
@@ -223,8 +229,9 @@ class SpectralRI:
 
     ## Update the cached weights + boundary matrices
     ## See: https://stackoverflow.com/questions/71225872/why-does-numpy-viewbool-makes-numpy-logical-and-significantly-faster
-    if deflate: 
+    if deflate:     
       if expand: 
+        ri, ci = self._D[p].row, self._D[p].col
         inc_mask = f_inc[ri].view(bool) & p_inc[ci].view(bool) # explicit index expansion 
         Dp, ri_inc, ci_inc = deflate_sparse(self._D[p], inc_mask, ind=True)
       else:
@@ -232,6 +239,7 @@ class SpectralRI:
       wf = self._weights[f][ri_inc]
       wp = self._weights[p][ci_inc]
     else: 
+      ri, ci = self._D[p].row, self._D[p].col
       inc_mask = f_inc[ri].view(bool) & p_inc[ci].view(bool)
       Dp = self._D[p].copy()
       Dp.data = np.where(inc_mask, Dp.data, 0.0)
@@ -254,11 +262,11 @@ class SpectralRI:
       return 0 
 
     ## First, check to see if the sub-matrix of interest consists solely of pivot entries 
-    # is_pivot_rows = self._status[f][f_inc] < 0 # negative p-simplices 
-    # is_pivot_cols = self._status[p][p_inc] < 0 # negative q-simplices
-    # if np.all(is_pivot_rows) or np.all(is_pivot_cols):
-    #   print("apparent full rank shortcut taken")
-    #   return min(len(is_pivot_rows), len(is_pivot_cols))
+    is_pivot_rows = self._status[f][f_inc] < 0 # negative p-simplices 
+    is_pivot_cols = self._status[p][p_inc] < 0 # negative q-simplices
+    if np.all(is_pivot_rows) or np.all(is_pivot_cols):
+      print("apparent full rank shortcut taken")
+      return min(len(is_pivot_rows), len(is_pivot_cols))
 
     ## Start with a matrix-free Up Laplacian operator 
     LA = self.lower_left(a, b, p, deflate=True, apparent=True)
@@ -332,4 +340,40 @@ class SpectralRI:
       pairs = [(b,c), (a,c), (b,d), (a,d)] 
       terms = [self.spectral_sum(q, i, j, fun, **kwargs) for cc, (i,j) in enumerate(pairs)]
       return sum(s*t for s,t in zip([+1,-1,-1,+1], terms)) if not(summands) else terms
+
+  def _index_weights(self, p: int):
+    weights = np.hstack([self._weights[q] for q in range(p+2)])
+    ranks = np.hstack([self._simplices[q] for q in range(p+2)])
+    dims = np.hstack([np.repeat(q, len(self._simplices[q])) for q in range(p+2)])
+    wrd = np.array(list(zip(weights, ranks, dims)), dtype=[('weight', 'f4'), ('rank', 'i8'), ('dim', 'i4')])
+    # wrd['rank'] = -wrd['rank']
+    wrd_ranking = np.argsort(np.argsort(wrd, order=('weight', 'dim', 'rank'))) #  + 1
+    index_weights = { q : wrd_ranking[dims == q] for q in range(p+2) }
+    return index_weights, wrd
+
+  ## Queries the persistent pairs via a logarithmic number of rank computations on the index persistence plane 
+  ## Iteratively re-weights 
+  def query_pairs(self, p: int, a: float, b: float, c: float, d: float, simplex_pairs: bool = False, **kwargs):
+    weights_backup = self._weights.copy()
+    self._weights, wrd = self._index_weights(p)
+    print(self._weights)
+    ai, bi = np.sum(wrd['weight'] < a), np.sum(wrd['weight'] < b)
+    ci, di = np.sum(wrd['weight'] < c), np.sum(wrd['weight'] < d)
+    kwargs['method'] = kwargs.get('method', 'cholesky')
+    print(f"Box: [{ai}, {bi}] x [{ci}, {di}]")
+    pairs = points_in_box(ai,bi,ci,di,lambda i,j,k,l: self.query(p,i,j,k,l,**kwargs), kwargs.pop("verbose", False))
+    print(pairs)
+    q = p + 1
+    p_dgm = []
+    for pos_ind, neg_ind in pairs.items():
+      pos_idx = np.flatnonzero(self._weights[p] == pos_ind)
+      neg_idx = np.flatnonzero(self._weights[q] == neg_ind)
+      assert len(pos_idx) == 1 and len(neg_idx) == 1, "Failed to re-index the pairs"
+      pw, rp = weights_backup[p][pos_idx], self._simplices[p][pos_idx]
+      nw, rq = weights_backup[q][neg_idx], self._simplices[q][neg_idx] 
+      p_dgm.append([pw, nw] if not simplex_pairs else [pw, nw, rp, rq])
+    self._weights = weights_backup
+    dgm_dtype = [("birth", "f4"), ("death", "f4")] if not simplex_pairs else [("birth", "f4"), ("death", "f4"), ("creator", "i8"), ("destroyer", "i8")]
+    return np.array([tuple(pair) for pair in p_dgm], dtype=dgm_dtype)
+
 

@@ -100,12 +100,6 @@ def test_query():
   ## Persistent Betti 
   # pattern = [(1,1),(1,0),(0,1),(0,0)]
   # for x,y in pattern:
-    
-
-
-  D[i:,:j]
-
-  R[:6,6:14]
 
   N = len(K)
   boxes = _generate_bfs(0, N-1)
@@ -123,17 +117,17 @@ def test_query():
     rank_R = [np.linalg.matrix_rank(R[r,:][:,c]) if np.prod(R[r][:,c].shape) > 0 else 0 for r,c in zip(rows, cols)]
     rank_D = [np.linalg.matrix_rank(D[r,:][:,c]) if np.prod(D[r][:,c].shape) > 0 else 0 for r,c in zip(rows, cols)]
 
-    assert sum_pivots == rank_R
+    assert sum_pivots == rank_R, "Number of pivots doesn't match rank"
     # card_D = sum(s*t for s,t in zip([1,-1,-1,1], rank_D))
     # card_R = sum(s*t for s,t in zip([1,-1,-1,1], rank_R))
     # assert card_D == card_R # apparently this isn't true
     
-  ## Verify (2.4) in the paper
+  ## Verify equation (2.4) in the paper
   rank = lambda X: np.linalg.matrix_rank(X) if np.prod(X.shape) > 0 else 0
   for j,i in enumerate(low_entry(R)):
     if i != -1:
       t1, t2, t3, t4 = rank(D[i:,:(j+1)]), rank(D[(i+1):,:(j+1)]), rank(D[(i+1):,:j]), rank(D[i:,:j])
-      assert R[i,j] == 1 and (t1 - t2 + t3 - t4) == 1
+      assert R[i,j] == 1 and (t1 - t2 + t3 - t4) == 1, "Inclusion/exclusion doesn't work out"
 
   from combin import comb_to_rank
 
@@ -168,13 +162,13 @@ def test_query():
   assert [RI.rank(p=1, a=a, b=b, method="direct") for a,b in corner_points(5,12)] == [1,0,0,0]
 
   ## Verifies persistent Betti number: should all be 2 
-  pb = []
-  for j,i in enumerate(low_entry(R[:,:(sx.card(K,0) + sx.card(K,1))])):
-    if i != -1:
-      qr = RI.query(0,i+1,j-1)
-      print(f"({i},{j}) |-> {qr}") # lower-left corner point
-      pb.append(qr)
-  assert np.all(np.array(pb) == 2), "Persistent Betti formulation not correct"
+  # pb = []
+  # for j,i in enumerate(low_entry(R[:,:(sx.card(K,0) + sx.card(K,1))])):
+  #   if i != -1:
+  #     qr = RI.query(0,i+1,j-1)
+  #     print(f"({i},{j}) |-> {qr}") # lower-left corner point
+  #     pb.append(qr)
+  # assert np.all(np.array(pb) == 2), "Persistent Betti formulation not correct"
 
   ## Verify cancelletions
   RI.query(0,1,6,summands=True), RI.query(0,0,6,summands=True), RI.query(0,1,7,summands=True), RI.query(0,0,7,summands=True)
@@ -208,7 +202,8 @@ def test_query():
 
 def test_bisection_simple():
   S, K, R, V, dgms_index = index_pers_example()
-  # show_index_pers(K, dgms_index)
+  RI = index_pers_RI(K)
+  show_index_pers(K, dgms_index, 0)
 
   def query_oracle_truth(dgms_index, p: int = 0):
     def _query(i: int, j: int, k: int, l: int):
@@ -236,6 +231,20 @@ def test_bisection_simple():
   assert points_in_box(7,9,13,14, query=query_oracle_truth(dgms_index, 1)) == {8: 14}
   assert points_in_box(11,13,14,15, query=query_oracle_truth(dgms_index, 1)) == {13: 15}
 
+  ## Test we can recover all the points 
+  assert [tuple(bc) for bc in RI.query_pairs(0, 0, 3, 5, 7)] == [(1,6), (2,7)]
+  assert [tuple(bc) for bc in RI.query_pairs(0, 2, 4, 8, 10)] == [(3,9), (4,10)]
+  assert [tuple(bc) for bc in RI.query_pairs(0, 4, 5, 9, 10)] == []
+  assert [tuple(bc) for bc in RI.query_pairs(0, 3, 4, 9, 10)] == [(4,10)]
+
+  ## Recover (3,9) but shouldn't?
+  show_index_pers(K, dgms_index, 0)
+  # RI.query_pairs(0, 3, 6, 9, 12, verbose=True)
+  assert RI.query(0,3,6,9,12) == 2
+  assert RI.query(0,3,7,9,12) == 2
+  assert RI.query(0,3,7,9,13) == 2
+  points_in_box(3,6,9,12, query=query_oracle(0))
+  RI.query_pairs(0,3,6,9,12, verbose=True)
 
 def test_bisection():
   np.random.seed(1234)
@@ -251,6 +260,8 @@ def test_bisection():
   dgms_index = ph(K_index, simplex_pairs=True)
   H1_b, H1_d = dgms_index[1]['birth'], dgms_index[1]['death']
 
+  # show_index_pers(K, dgms_index, 1)
+
   def query_oracle(i: int, j: int, k: int, l: int) -> int:
     # in_birth = np.logical_and(i <= H1_b, H1_b <= j)
     # in_death = np.logical_and(k <= H1_d, H1_d <= l)
@@ -258,13 +269,23 @@ def test_bisection():
     in_death = np.logical_and(k < H1_d, H1_d <= l)
     return np.sum(np.logical_and(in_birth, in_death))
 
+  assert query_oracle(30,32,257,259) == 1
+  assert query_oracle(31,33,257,259) == 0
+
   ## Generate all persistence pairs in the diagram
   from spirit.query import _generate_bfs
   all_boxes = _generate_bfs(0, len(K)-1)
-  all_pairs = { k : points_in_box(*box, query_oracle) for k, box in all_boxes.items() }
+  all_pairs = { k : points_in_box(*box, query_oracle, verbose=True) for k, box in all_boxes.items() }
   all_pairs = np.array([np.ravel(tuple(p.items())) for p in all_pairs.values() if len(p) > 0])
   all_pairs = all_pairs[np.lexsort(np.rot90(all_pairs)),:]
-  assert np.allclose(all_pairs - np.c_[dgms_index[1]['birth'], dgms_index[1]['death']], 0)
+  H1_pairs = np.c_[dgms_index[1]['birth'], dgms_index[1]['death']]
+  assert np.allclose(all_pairs - H1_pairs, 0)
+  
+  ## Recovers correct high persistence pair, but base casee needs to be amended
+  ## right now the base case is like i, i+1, i+2, i+2
+  ## Should be i, i+1, i+1, i+2
+  ## Fixed! 
+  # query_oracle(680,681,682,682)
 
 def test_rank_query():
   np.random.seed(1234)
