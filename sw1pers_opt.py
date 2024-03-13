@@ -9,6 +9,7 @@ from spirit.apparent_pairs import SpectralRI
 from pbsig.persistence import sliding_window
 from combin import rank_to_comb, comb_to_rank
 from ripser import ripser
+from math import comb
 
 # %% 
 from bokeh.plotting import figure, show
@@ -34,7 +35,7 @@ show(p)
 # %% Make a slidding window embedding
 from pbsig.linalg import pca
 from pbsig.color import bin_color
-N, M = 80, 25 # num of points, dimension 
+N, M = 50, 20 # num of points, dimension 
 X_delay = SW(n=N, d=M, L=6) ## should be the perfect period
 
 pt_color = (bin_color(np.arange(N), "turbo")*255).astype(np.uint8)
@@ -42,16 +43,15 @@ p = figure(width=250, height=250, match_aspect=True)
 p.scatter(*pca(X_delay, center=True).T, color=pt_color)
 show(p)
 
-
 # %% First: Ensure we have an (N,M) combination that achieves 6 as it's global maxima! 
 # Note: This seems not guarenteed unless with have a have enough dimension
-from bokeh.models import Span
-N, M = 120, 20 # 120, 25 works 
+from bokeh.models import Span 
 _, tau_ub = sw_parameters(bounds = (0, 12 * np.pi), d=M, L=4)
 _, tau_lb = sw_parameters(bounds = (0, 12 * np.pi), d=M, L=8)
-M_opt, tau_opt = sw_parameters(bounds = (0, 12 * np.pi), d=M, L=6)
-tau_rng = np.sort(np.append(np.linspace(tau_lb, tau_ub, 220), tau_opt))
-dgms_rng = [ripser(SW(n=N, d=M, tau=tau))['dgms'][1] for tau in tau_rng]
+# M_opt, tau_opt = sw_parameters(bounds = (0, 12 * np.pi), d=M, L=6)
+tau_opt = 5.625 / M
+tau_rng = np.sort(np.append(np.linspace(tau_lb, tau_ub, 400), tau_opt))
+dgms_rng = [ripser(SW(n=N, d=M, tau=tau), coeff=23)['dgms'][1] for tau in tau_rng]
 max_pers = np.array([np.max(np.diff(dgm, axis=1)) for dgm in dgms_rng])
 
 p = figure(width=400, height=250, title="Max persistence H1")
@@ -62,91 +62,311 @@ opt_window = (M*2*np.pi)/(M+1)
 p.add_layout(Span(location=opt_window, dimension='height', line_color='red'))
 show(p)
 
+# def is_prime(x):
+#   return all(x % i for i in range(2, x))
+
+# def next_prime(x):
+#   return min([a for a in range(x+1, 2*x) if is_prime(a)])
+
 # %% Test fixed pairing optimization idea
 from pbsig.vis import figure_dgm
-dgm1 = ripser(SW(n=N, d=M, tau=tau_opt))['dgms'][1]
+dgm1 = ripser(SW(n=N, d=M, tau=tau_rng[0]), coeff=23)['dgms'][1]
+# dgm1 = ripser(SW(n=N, d=M, tau=tau_opt))['dgms'][1]
 H1_pt = dgm1[np.argmax(np.diff(dgm1, axis=1))]
 # np.sum(np.isclose(pdist(SW(n=N, d=M, tau=tau_opt)), H1_pt[0], 1e-7))
 show(figure_dgm(dgm1))
+a,b,c,d = 1, 3, 6, 7
 
 # %% Somehow try to acquire the simplex pair 
 from spirit.apparent_pairs import SpectralRI
 from scipy.spatial.distance import squareform
 
-N, M = 50, 2
+N = 50
 X = SW(n=N, d=M, tau=tau_opt)
+# X = SW(n=N, d=M, tau=tau_rng[0])
 dX = pdist(X)
 DX = squareform(dX)
 RI = SpectralRI(n=N, max_dim=2)
 RI.construct(dX, p=0, apparent=False, discard=False, filter="flag")
-RI.construct(dX, p=1, apparent=False, discard=False, filter="flag")
+RI.construct(dX, p=1, apparent=True, discard=False, filter="flag")
 RI.construct(dX, p=2, apparent=True, discard=True, filter="flag")
-
-import timeit
-timeit.timeit(lambda: RI.construct(dX, p=2, apparent=True, discard=True, filter="flag"), number = 10)
-timeit.timeit(lambda: ripser(DX, distance_matrix=True), number=10)
 
 RI._D[0] = RI.boundary_matrix(0)
 RI._D[1] = RI.boundary_matrix(1)
 RI._D[2] = RI.boundary_matrix(2)
-a,b,c,d = 2.2,2.4,2.6,2.9
-RI.query(1, a,b,c,d, method="cholesky", summands=True)
+
+# RI.query(1, a,b,c,d, method="cholesky", summands=True)
 RI.query(1, a,b,c,d, method="cholesky", summands=False)
+assert RI.query(1, a,b,c,d, method="cholesky", summands=False) == 1
+assert RI.query(1, 2.0, 2.2, 6.0, 6.2) == 1
 
-RI._simplices[2] = cand_triangles
-RI._weights[2] = np.array([RI.cm.simplex_weight(t, 2) for t in cand_triangles])
-RI._status[2] = np.zeros(len(RI._weights[2]))
-RI._D[2] = boundary_matrix(2, cand_triangles, RI._simplices[1])
-RI.query(1, 3.0, 4.0, 6.0, 7.0, method="cholesky", summands=True)
-RI.query(1, 3.0, 4.0, 6.0, 7.0, method="cholesky", summands=False)
+# %% 
+dgm1_abcd = RI.query_pairs(1, a, b, c, d, method="cholesky", verbose=True, simplex_pairs=True)
+p = figure_dgm(dgm1_abcd)
+show(p)
+assert np.all(H1_pt[0] == dgm1_abcd['birth'])
+assert np.all(H1_pt[1] == dgm1_abcd['death'])
 
-## This should work but it doesn't
-from spirit.apparent_pairs import boundary_matrix
-cand_triangles = RI._simplices[2][RI._status[2] <= 0]
-RI._D[2] = boundary_matrix(2, cand_triangles, RI._simplices[1])
-# RI._D[2] = boundary_matrix(2, RI._simplices[2], pos_edges)
-# RI._D[2] = boundary_matrix(2, RI._simplices[2], pos_edges)
-RI.query(1, 3.0, 4.0, 6.0, 7.0, method="cholesky")
-# RI.query(1, 1.0, 2.0, 6.0, 7.0, method="cholesky")
+# %% Debugging 
+weights_copy = RI._weights.copy()
+RI._weights, wrd = RI._index_weights(1)
+ai, bi = np.sum(wrd['weight'] < a), np.sum(wrd['weight'] < b)
+ci, di = np.sum(wrd['weight'] < c), np.sum(wrd['weight'] < d)
+# wrd['rank'] = -wrd['rank']
+# wrd_ranking = np.argsort(np.argsort(wrd, order=('weight', 'dim', 'rank')))
+# index_weights = { q : wrd_ranking[wrd['dim'] == q] for q in range(3) }
+# RI._weights = index_weights
+
+from spirit.query import points_in_box
+p = 1
+points_in_box(ai,bi,ci,di,lambda i,j,k,l: RI.query(p,i,j,k,l,method='cholesky'), True)
+weights_copy[1][RI._weights[1] == 150]
+weights_copy[2][RI._weights[2] == 1144]
+weights_copy[2][RI._weights[2] == 1110]
+print(H1_pt)
+
+## Wrong one yields   (104,106,1039,1889) = 0
+## Correct one yields (104,106,1039,1889) = 1
+
+# %% 
+validate = True
+pairs = [None] * len(tau_rng)
+for ii, tau in enumerate(tau_rng):
+  X = SW(n=N, d=M, tau=tau)
+  dX = pdist(X)
+  RI.construct(dX, p=0, apparent=False, discard=False, filter="flag")
+  RI.construct(dX, p=1, apparent=True, discard=False, filter="flag")
+  RI.construct(dX, p=2, apparent=True, discard=True, filter="flag")
+  RI._D[0] = RI.boundary_matrix(0)
+  RI._D[1] = RI.boundary_matrix(1)
+  RI._D[2] = RI.boundary_matrix(2)
+  pairs[ii] = RI.query_pairs(1, a, b, c, d, method="cholesky", verbose=False, simplex_pairs=True)
+  if len(pairs[ii]) > 0 and validate:
+    dgm1 = ripser(SW(n=N, d=M, tau=tau))['dgms'][1]
+    H1_pt = dgm1[np.argmax(np.diff(dgm1, axis=1))]
+    assert np.all(H1_pt[0] == pairs[ii]['birth'])
+    assert np.all(H1_pt[1] == pairs[ii]['death'])
+  print(ii)
+
+RI.query_pairs(1, a, b, c, d, method="cholesky", verbose=True, simplex_pairs=True)
 
 
-RI._simplices[2] = cand_triangles
-RI._weights[2] = np.array([RI.cm.simplex_weight(t, 2) for t in cand_triangles])
-RI._status[2] = np.zeros(len(RI._weights[2]))
+
+# RI.cm.simplex_weight(106, 1)
+# RI.cm.simplex_weight(1394, 2)
+
+RI._simplices[1][np.flatnonzero(RI._weights[1] == 150)]
+RI.cm.simplex_weight(657, 1)
+
+weights_copy[1][RI._simplices[1] == 150]
+
+
+
+# %% Use the simplex pairs to create a gradient
+from pbsig.persistence import sw_parameters
+def sliding_window_np(f: Callable, M: int, N: int, bounds: Tuple = (0, 1)):
+  ''' Creates a slidding window point cloud over 'n' windows '''
+  def _sw(tau: float, ind = None):
+    ind = np.arange(N) if ind is None else np.array(ind)
+    d, tau = sw_parameters(bounds, d=M, tau=tau, w=None, L=None)
+    T = np.linspace(bounds[0], bounds[1] - d*tau, N)
+    return f(T[ind,np.newaxis] + np.arange(d+1)*tau)
+  return _sw
+
+def num_deriv_sw(dgm: np.ndarray, p: int, SW: Callable, **kwargs):
+  import numdifftools as nd
+  if len(dgm) == 0: 
+    return 0 
+  max_pers_ind = np.argmax(dgm['death'] - dgm['birth'])
+  cr = np.ravel(rank_to_comb(dgm[max_pers_ind]['creator'], k=p+1, n=len(X), order='colex'))
+  de = np.ravel(rank_to_comb(dgm[max_pers_ind]['destroyer'], k=p+2, n=len(X), order='colex'))
+  diam_p = lambda t: np.max(pdist(SW(t, cr)))
+  diam_q = lambda t: np.max(pdist(SW(t, de)))
+  return nd.Derivative(lambda t: diam_q(t) - diam_p(t), method='central', full_output=True, order=3)
+
+
+f = lambda t: np.cos(t) + np.cos(3*t)
+SW_np = sliding_window_np(f, M, N, bounds=(0, 12*np.pi))
+valid_grads = np.flatnonzero(np.array([len(d) for d in pairs]) > 0)
+dgm = pairs[30]
+
+a,b,c,d = 1, 2, 6, 7
+def get_deriv(tau, ripser: bool = False):
+  X = SW_np(tau)
+  dX = pdist(X)
+  RI.construct(dX, p=0, apparent=False, discard=False, filter="flag")
+  RI.construct(dX, p=1, apparent=True, discard=False, filter="flag")
+  RI.construct(dX, p=2, apparent=True, discard=True, filter="flag")
+  RI._D[0] = RI.boundary_matrix(0)
+  RI._D[1] = RI.boundary_matrix(1)
+  RI._D[2] = RI.boundary_matrix(2)
+  pairs = RI.query_pairs(1, a, b, c, d, method="cholesky", verbose=False, simplex_pairs=True)
+  if len(pairs) == 0:
+    return None
+  return num_deriv_sw(pairs, 1, SW=SW_np)
+
+# dr = num_deriv_sw(dgm, 1, SW=SW_np)
+DR = [get_deriv(tau) for tau in tau_rng]
+sw_fun = np.array([dr.fun(tau) if dr is not None else 0 for dr, tau in zip(DR, tau_rng)])
+
+np.flatnonzero(np.logical_and(sw_fun != 0.0, sw_fun != max_pers))
+tau = tau_rng[30]
+
+dgm_true = ripser(SW_np(tau=tau))['dgms'][1]
+np.max(np.diff(dgm_true, axis=1))
+show(figure_dgm(dgm_true))
+
+# np.max(np.diff(ripser(SW(n=N, d=M, tau=tau))['dgms'][1], axis=1))
+X = SW_np(tau)
+dX = pdist(X)
+RI.construct(dX, p=0, apparent=False, discard=False, filter="flag")
+RI.construct(dX, p=1, apparent=True, discard=False, filter="flag")
+RI.construct(dX, p=2, apparent=True, discard=True, filter="flag")
+RI._D[0] = RI.boundary_matrix(0)
+RI._D[1] = RI.boundary_matrix(1)
 RI._D[2] = RI.boundary_matrix(2)
-RI.query(1, 1.0, 2.0, 6.0, 7.0, method="cholesky")
+pairs = RI.query_pairs(1, a, b, c, d, method="cholesky", verbose=True, simplex_pairs=True)
 
+creator = np.ravel(rank_to_comb(pairs['creator'], order='colex', n=len(X), k=2))
+destroyer = np.ravel(rank_to_comb(pairs['destroyer'], order='colex', n=len(X), k=3))
 
-## This works - save positive edges that aren't apparent pairs
-poss_cofacets = RI.cm.cofacets_merged(RI._simplices[1][RI._status[1] >= 0], 1)
-pos_triangles = RI._simplices[2][RI._status[2] > 0]
-# cand_triangles = np.flip(np.setdiff1d(poss_cofacets, pos_triangles))
-cand_triangles = np.array(list(set(poss_cofacets) - set(pos_triangles)))
-RI._simplices[2] = cand_triangles
-RI._weights[2] = np.array([RI.cm.simplex_weight(t, 2) for t in cand_triangles])
-RI._status[2] = np.zeros(len(RI._weights[2]))
-RI._D[2] = RI.boundary_matrix(2)
+print(f"Creator: {creator} w/ diam = {np.max(pdist(SW_np(tau, creator))):.5f}")
+print(f"Destroyer: {destroyer} w/ diam = {np.max(pdist(SW_np(tau, destroyer))):.5f}")
 
+# sw_fun = np.array([dr.fun(tau).item() for tau in tau_rng])
+# sw_gradient = np.array([dr(tau)[0].item() for tau in tau_rng])
 
-
-# only_unk_tris = RI._status[2] == 0
-# RI._simplices[2] = RI._simplices[2][only_unk_tris]
-# RI._status[2] = RI._status[2][only_unk_tris]
-# RI._weights[2] = RI._weights[2][only_unk_tris]
-# RI._D[2] = RI.boundary_matrix(2)
-
-# pos_edges = RI._status[1] >= 0
-# RI._simplices[1] = RI._simplices[1][nonpos_edges]
-# RI._status[1] = RI._status[1][nonpos_edges]
-# RI._weights[1] = RI._weights[1][nonpos_edges]
-# RI._D[2] = RI.boundary_matrix(2)
-
-# RI._D[2] = RI._D[2].tolil()[RI._status[1] <= 0,:].tocoo()
+# %% Show gradient
+p = figure(width=350, height=300)
+p.scatter(tau_rng*M, sw_fun, color=np.where(sw_gradient > 0, 'red', 'green'))
+p.line(tau_rng*M, max_pers, color='black')
+p.scatter(tau_rng*M, max_pers, size=3, color='black')
+show(p)
 
 
 
-# This is abotu 1/4 of the ripser computation
-# timeit.timeit(lambda: RI.construct(dX, p=1, apparent=True, discard=True, filter="flag"), number=10)
+
+
+# %% 
+from sksparse.cholmod import cholesky_AAt
+Dp_csc = RI._D[2].tocsc()
+
+
+## Simplicial seems faster than supernodal, unless order == natural!
+# amd and colamd are fastest orderings, and one of them is the default ordering
+# the default mode seems to be supernodal! 
+# NOTE: about 23% time spent building coo matrices 
+# NOTE: about 54% time spent on cholesky
+import timeit
+timeit.timeit(lambda: cholesky_AAt(Dp_csc, beta=1e-6, mode='simplicial', ordering_method="colamd").D(), number=150)
+timeit.timeit(lambda: cholesky_AAt(Dp_csc, beta=1e-6, mode='supernodal', ordering_method="colamd").D(), number=150)
+timeit.timeit(lambda: cholesky_AAt(Dp_csc, beta=1e-6).D(), number=150)
+F = cholesky_AAt(Dp_csc, beta=1e-6, mode='simplicial')
+
+
+# %% profiling
+from spirit.query import points_in_box, bisection_tree, find_negative
+from line_profiler import LineProfiler
+profile = LineProfiler()
+profile.add_function(RI.query_pairs)
+profile.add_function(points_in_box)
+profile.add_function(bisection_tree)
+profile.add_function(find_negative)
+profile.add_function(RI.query)
+profile.add_function(RI.rank)
+profile.add_function(RI.lower_left)
+profile.enable_by_count()
+RI.query_pairs(1, a, b, c, d, method="cholesky")
+profile.print_stats()
+
+
+
+top10 = dgms_index[1][np.argpartition(-(dgms_index[1]['death'] - dgms_index[1]['birth']), 10)][:10]
+
+ai, bi = np.sum(wrd['weight'] < 1.0), np.sum(wrd['weight'] <= 2.0)
+ci, di = np.sum(wrd['weight'] < 6.0), np.sum(wrd['weight'] <= 7.0)
+RI.query(1,ai,bi,ci,di, method="cholesky", summands=False)
+RI.query(1,bi,ci, method="cholesky", summands=False)
+
+from spirit.query import points_in_box, bisection_tree
+query = lambda i,j,k,l: RI.query(1,i,j,k,l, method="cholesky", summands=False)
+# query = lambda i,j,k,l: RI.query(1,j,k, method="cholesky", summands=False)
+points_in_box(ai,bi,ci,di, query=query, verbose=True)
+
+
+## points in box say the pair is 111, 1570
+re = RI._simplices[1][np.flatnonzero(RI._weights[1] == 107)]
+rt = RI._simplices[2][np.flatnonzero(RI._weights[2] == 1395)]
+diam_f = sx.flag_filter(dX)
+pos_edg = np.ravel(rank_to_comb(re, k=2, order='colex', n=len(X)))
+neg_tri = np.ravel(rank_to_comb(rt, k=3, order='colex', n=len(X)))
+
+## Compare the pair found to the ground truth
+## works if remember to offset weights by 1! 
+## Full index persistence works! It's unclear if local index would work too 
+diam_f(pos_edg), diam_f(neg_tri)
+H1_pt
+
+
+# %% Indeed tracking the individual pair is not useful
+tau_filters = [sx.flag_filter(pdist(SW(n=N, d=M, tau=tau))) for tau in tau_rng]
+p = figure(width=400, height=250, title="Max persistence H1")
+p.line(tau_rng*M, max_pers, color='black')
+p.scatter(tau_rng*M, max_pers, size=3, color='black')
+
+b_edge = np.array([tau_filters[i](pos_edg) for i,tau in enumerate(tau_rng)])
+d_tria = np.array([tau_filters[i](neg_tri) for i,tau in enumerate(tau_rng)])
+p.scatter(tau_rng*M, d_tria - b_edge, color='red', size=2)
+show(p)
+
+## 
+tau = 5.625 / M
+
+
+# %% Get the index persistence 
+from spirit.query import _index_persistence
+from pbsig.persistence import ph
+K = sx.rips_filtration(X, p=2)
+K = sx.RankFiltration(K)
+K.order = 'reverse colex'
+K_index = sx.RankFiltration({i:s for i,(d,s) in enumerate(K)}.items())
+dgms_index = ph(K_index, simplex_pairs=True, validate=False)
+
+  
+from pbsig.vis import figure_dgm, show, output_notebook
+output_notebook()
+p = figure_dgm(dgms_index[1])
+p.xaxis[0].ticker = np.arange(len(K))
+p.yaxis[0].ticker = np.arange(len(K))
+show(p)
+
+
+# %% Re-weigh using index persistence
+# weights = np.hstack([RI._weights[0], RI._weights[1], RI._weights[2]])
+# ranks = np.hstack([RI._simplices[0], RI._simplices[1], RI._simplices[2]])
+# dims = np.hstack([np.repeat(0, len(RI._simplices[0])), np.repeat(1, len(RI._simplices[1])), np.repeat(2, len(RI._simplices[2]))])
+# wrd = np.array(list(zip(weights, ranks, dims)), dtype=[('weight', 'f4'), ('rank', 'i4'), ('dim', 'i4')])
+# wrd_ranking = np.argsort(np.argsort(wrd, order=('weight', 'dim', 'rank'))) + 1
+# RI._weights[0] = wrd_ranking[dims == 0]
+# RI._weights[1] = wrd_ranking[dims == 1]
+# RI._weights[2] = wrd_ranking[dims == 2]
+# %% Get the actual pair 
+from spirit.query import _generate_bfs
+N = sum([len(RI._simplices[p]) for p in range(3)])
+_generate_bfs(0, N-1)[0]
+
+## Reindex by dimension? Or strictly by weight ?
+RI._weights[0] = np.argsort(np.argsort(RI._weights[0])) + 1
+RI._weights[1] = np.argsort(np.argsort(RI._weights[1])) + max(RI._weights[0]) + 1
+RI._weights[2] = np.argsort(np.argsort(RI._weights[2])) + max(RI._weights[1]) + 1
+
+np.hstack((RI._weights[1], RI._weights[2]))
+
+# RI.query(1, 0, 125, 126, 250)
+len(points_in_box(0, 125, 126, 250, query=lambda i,j,k,l: RI.query(1, i,j,k,l, method="cholesky")))
+
+
+
 
 len(RI._simplices[1])
 comb(150,3)
@@ -455,6 +675,11 @@ dgm_test[0]
 
 np.random.uni
 
+import yep
+yep.start('enum_triangles.prof')
+for i in range(120):
+  RI.construct(dX, p=2, apparent=True, discard=True, filter="flag")
+yep.stop()
 
 
 other_tau = 2*np.pi / (6 * (M + 1))
@@ -462,5 +687,23 @@ np.max(np.diff(ripser(SW(n=N, d=M, tau=other_tau))['dgms'][1], axis=1))
 
 
 # %% Get the pair at the optimal step size and determine how relevent its lifetime is globally
+G1 = np.random.normal(size=(50,2), loc=(5,5), scale=1.5)
+G2 = np.random.normal(size=(50,2), loc=(-5,-5), scale=1.5)
+N = np.random.uniform(size=(25,2), low=-5, high=5)
+G = np.vstack([G1, G2, N])
 
+p = figure(width=300, height=300)
+p.scatter(*G.T)
+show(p)
 
+X = np.c_[G, np.ones(len(G))]
+w = np.array([-0.5,-0.25,0])
+
+p = figure(width=300, height=300)
+p.scatter(*G.T, color=np.where(np.sign(w @ X.T) <= 0, "red", "blue"))
+show(p)
+
+y = np.sign(w @ X.T)
+Xy = np.c_[G, y]
+
+np.savetxt("perceptron.txt", Xy[np.random.choice(range(len(X)), replace=False, size=len(Xy)),:], fmt="%g,%g,%d")
