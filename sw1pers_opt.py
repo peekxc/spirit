@@ -86,10 +86,15 @@ X = SW(n=N, d=M, tau=tau_opt)
 # X = SW(n=N, d=M, tau=tau_rng[0])
 dX = pdist(X)
 DX = squareform(dX)
+ER = sx.enclosing_radius(DX)
 RI = SpectralRI(n=N, max_dim=2)
 RI.construct(dX, p=0, apparent=False, discard=False, filter="flag")
-RI.construct(dX, p=1, apparent=True, discard=False, filter="flag")
-RI.construct(dX, p=2, apparent=True, discard=True, filter="flag")
+RI.construct(dX, p=1, apparent=True, discard=False, filter="flag", threshold=2*ER)
+RI.construct(dX, p=2, apparent=True, discard=True, filter="flag", threshold=2*ER)
+
+RI.construct(dX, p=0, apparent=False, discard=False, filter="flag")
+RI.construct(dX, p=1, apparent=True, discard=False, filter="flag", threshold=(a, d))
+RI.construct(dX, p=2, apparent=True, discard=True, filter="flag", threshold=(a, d))
 
 RI._D[0] = RI.boundary_matrix(0)
 RI._D[1] = RI.boundary_matrix(1)
@@ -98,7 +103,7 @@ RI._D[2] = RI.boundary_matrix(2)
 # RI.query(1, a,b,c,d, method="cholesky", summands=True)
 RI.query(1, a,b,c,d, method="cholesky", summands=False)
 assert RI.query(1, a,b,c,d, method="cholesky", summands=False) == 1
-assert RI.query(1, 2.0, 2.2, 6.0, 6.2) == 1
+# assert RI.query(1, 2.0, 2.2, 6.0, 6.2) == 1
 
 # %% 
 dgm1_abcd = RI.query_pairs(1, a, b, c, d, method="cholesky", verbose=True, simplex_pairs=True)

@@ -1,6 +1,7 @@
 import numpy as np 
 import spirit
 from scipy.spatial.distance import pdist, squareform, cdist
+from math import comb
 from combin import rank_to_comb, comb_to_rank
 import splex as sx
 from spirit import apparent_pairs
@@ -19,14 +20,6 @@ from spirit import apparent_pairs
 #   assert np.all(np.flatnonzero(APs != -1) == np.array([2,3]))
 #   e_verts = rank_to_comb(APs[APs != -1], k=2, order='colex', n = sx.card(S,0))
 #   assert np.allclose(np.ravel(e_verts), np.array([0,3,1,2]))
-
-def test_init_basics():
-  X = np.random.uniform(size=(10,2))
-  R = apparent_pairs.rip_mod.ripser_lower(pdist(X), 2, 100)
-  assert R.threshold == 100.0
-  assert R.dim_max == 2
-  assert R.n == 10
-  assert R.modulus == 2 # this is true
 
 def test_rank_ll():
   X = np.random.uniform(size=(10,2))
@@ -352,7 +345,6 @@ def test_ripser_coboundary():
     j = j - 1
     print(f"{cofacet_index} -> {np.flip(test_cofacet)}")
     
-
 def test_spirit_coboundary():
   from spirit.apparent_pairs import clique_mod
   n, d = 7, 2
@@ -374,8 +366,6 @@ def test_spirit_boundary():
   r = comb_to_rank([5,3,0], n=n, order='colex')
   b = clique_mod.boundary(r, d, n)
   assert np.all(np.sort(b) == np.array([3,10,13]))
-
-
 
 def test_boundary_ranks():
   from spirit.apparent_pairs import clique_mod

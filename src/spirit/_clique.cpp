@@ -17,7 +17,6 @@
 #include <combin/combinatorial.h>
 #include <disjoint_set.h> 
 
-
 using index_t = std::int64_t;
 using combinatorial::BinomialCoefficientTable;
 using combinatorial::unrank_colex;
@@ -47,9 +46,56 @@ template< typename T, typename F = typename T::value_type >
 concept SimplexIndexer = requires(T filtration, index_t* a, index_t* b)
 { 
   { filtration.simplex_index(a,b) } ->  std::convertible_to< F >;
+    // { filtration.p_simplices(0, ) } ->  std::convertible_to< F >;
   // { T::simplex_index() } -> I;
 } && std::constructible_from< T, const size_t >;
 
+
+// Enumerates the ranks of a simplicial complex
+// template< bool reverse = true, bool weights = false, SimplexIndexer SI, typename Lambda > 
+// void enum_simplex_ranks_dense(const size_t p, SI& I, Lambda&& f) const {
+//   const index_t NS = combinatorial::BinomialCoefficient< true >(I.n, p+1);
+//   if constexpr (reverse){
+//     for (index_t r = NS - 1; r >= 0; --r){
+//       if constexpr(weights){
+//         auto s_weight = I.simplex_index(b, e);
+//         f(r, s_weight); 
+//       } else {
+//         f(r);
+//       }
+//     }
+//   } else {
+//     for (index_t r = 0; r < NS; ++r){
+//       if constexpr(weights){
+//         auto s_weight = I.simplex_index(b, e);
+//         f(r, s_weight); 
+//       } else {
+//         f(r);
+//       }
+//     }
+//   }
+// }
+
+// Reverse <=> enumerates vertex labels satisfying {vn, vn-1, ..., v0}
+// Weights <=> compute the simplex weight (index) and append to output
+template< bool reverse = true, bool weights = true, SimplexIndexer SI, typename Lambda > 
+void enum_simplex_vertices_dense(const size_t p, SI& I, Lambda&& f) {
+  auto vertices = std::vector< size_t >(I.n, 0);
+  if (reverse){
+    std::iota(vertices.rbegin(), vertices.rend(), 0);
+  } else {
+    std::iota(vertices.begin(), vertices.end(), 0);
+  }
+  combinatorial::for_each_combination(vertices.begin(), vertices.begin()+(p+1), vertices.end(), [&](auto b, auto e){
+    if constexpr(weights){
+      auto s_weight = I.simplex_index(b, e);
+      f(b, e, s_weight);
+    } else {
+      f(b, e);
+    }
+    return false; 
+  });
+}
 
 template< typename T >
 struct StarFilter {
@@ -72,17 +118,18 @@ struct StarFilter {
   }
 
   template< typename Lambda > 
-  void p_simplices(const size_t p, const T threshold, Lambda&& f) const {
-    auto vertices = std::vector< size_t >(n, 0);
-    std::iota(vertices.rbegin(), vertices.rend(), 0);
-    combinatorial::for_each_combination(vertices.begin(), vertices.begin()+(p+1), vertices.end(), [&](auto b, auto e){
-      auto s_weight = simplex_index(b, e);
-      if (s_weight <= threshold){
-        f(b, e, s_weight);
-      }
-      return false; 
-    });
+  void enum_simplex_vertices(const size_t p, Lambda&& f) const {
+    enum_simplex_vertices_dense< false, true >(p, *this, f);
   }
+  template< typename Lambda > 
+  void enum_simplex_vertices_r(const size_t p, Lambda&& f) const {
+    enum_simplex_vertices_dense< true, true >(p, *this, f);
+  }
+
+  // template< bool reverse = true, bool weights = false, typename Lambda > 
+  // void enum_simplex_ranks(const size_t p, Lambda&& f) const {
+  //   enum_simplex_ranks_dense< reverse, weights >(p, *this, f);
+  // }
 };
 
 template< typename T >
@@ -97,7 +144,7 @@ struct FlagFilter {
     assert(w_.size() == (n*(n - 1) / 2));
   };
 
-  // template< std::integral I >
+  // Takes as input an iterator of vertex labels and returns as output the filter weight of their simplex
   template< typename Iter >
   auto simplex_index(Iter b, Iter e) const -> T {
     T s_weight = std::numeric_limits< T >::min();
@@ -141,34 +188,94 @@ struct FlagFilter {
     }
   }
 
+  // template< typename Lambda > 
+  // void enum_simplex_ranks(const size_t p, Lambda&& f) const {
+  //   if (p == 0){
+  //     const auto eps = std::numeric_limits< T >::min();
+  //     for (auto r = 0; r < n; ++r){ f(r, eps) };
+  //   } else if (p == 1){
+  //     // Since ranking is faster than unranking, we enumerate weights in lex order, 
+  //     // and just rank using reverse colex vertex labels 
+  //     const index_t NS = combinatorial::BinomialCoefficient< true >(n, 2);
+  //     auto vertices = std::vector< index_t >(NS);
+  //     std::iota(vertices.rbegin(), vertices.rend(), 0);
+  //     auto w_it = weights.begin();
+  //     combinatorial::for_each_combination(vertices.begin(), vertices.begin() + 2, vertices.end(), 
+  //       [&f, &w_it](auto b, [[maybe_unused]] auto e){
+  //         f(combinatorial::rank_colex_k(b, 2), ++w_it);
+  //         return false; 
+  //     });
+  //     for (; w_it != weights.end(); ++w_it, ++r){
+  //       f(r, *w_it);
+  //     }
+  //   } else {
+  //     auto vertices = std::vector< index_t >();
+  //     combinatorial::for_each_combination(vertices.begin(), vertices.begin()+(p+1), vertices.end(), [&](auto b, auto e){
+  //       auto s_weight = simplex_index(b, e);
+  //       f(b, e, s_weight);
+  //       return false; 
+  //     });
+  //   }
+  // }
 
   template< typename Lambda > 
-  void p_simplices(const size_t p, const T threshold, Lambda&& f) const{
+  void enum_simplex_vertices(const size_t p, Lambda&& f) const {
     auto vertices = std::vector< size_t >(n, 0);
-    std::iota(vertices.rbegin(), vertices.rend(), 0);
-    if (p == 1){
+    std::iota(vertices.begin(), vertices.end(), 0);
+    if (p == 0){
+      const auto eps = std::numeric_limits< T >::min();
+      for (auto b = vertices.begin(); b != vertices.end(); ++b){
+        f(b, b+1, eps);
+      }  
+    } else if (p == 1){
       index_t i = 0; 
       combinatorial::for_each_combination(vertices.begin(), vertices.begin()+2, vertices.end(), [&](auto b, auto e){
         auto s_weight = weights[i++]; // simplex_index(b, e);
-        if (s_weight <= threshold){
-          f(b, e, s_weight);
-        }
+        f(b, e, s_weight);
         return false; 
       });
     } else if (p == 2){
       combinatorial::for_each_combination(vertices.begin(), vertices.begin()+3, vertices.end(), [&](auto b, auto e){
         auto s_weight = simplex_index< 2 >(b, e);
-        if (s_weight <= threshold){
-          f(b, e, s_weight);
-        }
+        f(b, e, s_weight);
         return false; 
       });
     } else {
       combinatorial::for_each_combination(vertices.begin(), vertices.begin()+(p+1), vertices.end(), [&](auto b, auto e){
         auto s_weight = simplex_index(b, e);
-        if (s_weight <= threshold){
-          f(b, e, s_weight);
-        }
+        f(b, e, s_weight);
+        return false; 
+      });
+    }
+  }
+  
+  // Enumerates the simplices in colexicographical order (reverse lexicographically) 
+  template< typename Lambda > 
+  void enum_simplex_vertices_r(const size_t p, Lambda&& f) const {
+    auto vertices = std::vector< size_t >(n, 0);
+    std::iota(vertices.rbegin(), vertices.rend(), 0);
+    if (p == 0){
+      const auto eps = std::numeric_limits< T >::min();
+      for (auto b = vertices.begin(); b != vertices.end(); ++b){
+        f(b, b+1, eps);
+      }  
+    } else if (p == 1){
+      index_t i = 0; 
+      combinatorial::for_each_combination(vertices.begin(), vertices.begin()+2, vertices.end(), [&](auto b, auto e){
+        auto s_weight = weights[combinatorial::rank_lex_2(b[1], b[0], n)]; // simplex_index(b, e);
+        f(b, e, s_weight);
+        return false; 
+      });
+    } else if (p == 2){
+      combinatorial::for_each_combination(vertices.begin(), vertices.begin()+3, vertices.end(), [&](auto b, auto e){
+        auto s_weight = simplex_index< 2 >(b, e);
+        f(b, e, s_weight);
+        return false; 
+      });
+    } else {
+      combinatorial::for_each_combination(vertices.begin(), vertices.begin()+(p+1), vertices.end(), [&](auto b, auto e){
+        auto s_weight = simplex_index(b, e);
+        f(b, e, s_weight);
         return false; 
       });
     }
@@ -203,25 +310,29 @@ struct MetricFilter {
     });
     return s_weight;
   }
-
-  template< typename Lambda > 
-  void p_simplices(const size_t p, const T threshold, Lambda&& f) const {
-    auto vertices = std::vector< size_t >(n, 0);
-    std::iota(vertices.rbegin(), vertices.rend(), 0);
-    combinatorial::for_each_combination(vertices.begin(), vertices.begin()+(p+1), vertices.end(), [&](auto b, auto e){
-      auto s_weight = simplex_index(b, e);
-      if (s_weight <= threshold){
-        f(b, e, s_weight);
-      }
-      return false; 
-    });
-  }
-
-  // Given index of simplex S, its weight, and the vertex id 'v' of face F = S - {v}
-  // auto facet_weight(){
-
+  
+  // // Rank version 
+  // auto simplex_index(const index_t r, const index_t p) -> T {
+  //   T s_weight = std::numeric_limits< T >::min();
+  //   auto vertices = std::vector< index_t >(p+1);
+  //   combinatorial::unrank_colex(r, p+1, vertices.begin());
+  //   return simplex_index(vertices.begin(), vertices.end());
   // }
 
+
+  template< typename Lambda > 
+  void enum_simplex_vertices(const size_t p, Lambda&& f) const {
+    enum_simplex_vertices_dense< false, true >(p, *this, f);
+  }
+  template< typename Lambda > 
+  void enum_simplex_vertices_r(const size_t p, Lambda&& f) const {
+    enum_simplex_vertices_dense< true, true >(p, *this, f);
+  }
+
+  // template< bool reverse = true, bool weights = false, typename Lambda > 
+  // void enum_simplex_ranks(const size_t p, Lambda&& f) const {
+  //   enum_simplex_ranks_dense< reverse, weights >(p, *this, f);
+  // }
 };
 
 using combinatorial::BC; // use pre-allocated BC table
@@ -481,9 +592,11 @@ struct Cliqueser {
     std::vector< IndexPair< float > >& pos_edges
   ) const {
     // First collect and sort all the edges <= the supplied threshold by weight / colex rank
-    filter.p_simplices(1, threshold, [&edges](auto b, auto e, float weight){
-      auto r = combinatorial::rank_colex_k(b, 2);
-      edges.push_back(std::make_pair(r, weight));
+    filter.enum_simplex_vertices(1, [&edges, threshold](auto b, auto e, float weight){
+      if (weight <= threshold){
+        auto r = combinatorial::rank_colex_k(b, 2);
+        edges.push_back(std::make_pair(r, weight));
+      }
     });
     std::sort(edges.rbegin(), edges.rend(), GreaterPair< float >());
     
@@ -508,57 +621,6 @@ struct Cliqueser {
     // if (dim_max > 0) std::reverse(columns_to_reduce.begin(), columns_to_reduce.end());
   }
 
-
-	//  entry_hash_map& pivot_column_index,
-  // void compute_pairs(
-  //   const std::vector< diameter_index_t >& columns_to_reduce, 
-  //   const index_t dim
-  // ) {
-	// 	compressed_sparse_matrix< diameter_entry_t > reduction_matrix;
-	
-	// 	for (size_t idx_col = 0; idx_col < columns_to_reduce.size(); ++idx_col) {
-	// 		diameter_entry_t column_to_reduce(columns_to_reduce[idx_col], 1);
-	// 		value_t diameter = get_diameter(column_to_reduce);
-	// 		reduction_matrix.append_column();
-	// 		std::priority_queue<diameter_entry_t, std::vector<diameter_entry_t>,
-	// 		                    greater_diameter_or_smaller_index_comp<diameter_entry_t>>
-  //       working_reduction_column, working_coboundary;
-
-	// 		diameter_entry_t e, pivot = init_coboundary_and_get_pivot(column_to_reduce, working_coboundary, dim, pivot_column_index);
-
-	// 		while (true) {
-	// 			if (get_index(pivot) != -1) {
-	// 				auto pair = pivot_column_index.find(get_entry(pivot));
-	// 				if (pair != pivot_column_index.end()) {
-	// 					entry_t other_pivot = pair->first;
-	// 					index_t index_column_to_add = pair->second;
-	// 					coefficient_t factor =
-	// 					    modulus - get_coefficient(pivot) *
-	// 					                  multiplicative_inverse[get_coefficient(other_pivot)] %
-	// 					                  modulus;
-	// 					add_coboundary(reduction_matrix, columns_to_reduce, index_column_to_add,
-	// 					               factor, dim, working_reduction_column, working_coboundary);
-	// 					pivot = get_pivot(working_coboundary);
-	// 				} else if (get_index(e = get_zero_apparent_facet(pivot, dim + 1)) != -1) {
-	// 					set_coefficient(e, modulus - get_coefficient(e));
-	// 					add_simplex_coboundary(e, dim, working_reduction_column, working_coboundary);
-	// 					pivot = get_pivot(working_coboundary);
-	// 				} else {
-	// 					pivot_column_index.insert({get_entry(pivot), index_column_to_reduce});
-
-	// 					while (true) {
-	// 						diameter_entry_t e = pop_pivot(working_reduction_column);
-	// 						if (get_index(e) == -1) break;
-	// 						assert(get_coefficient(e) > 0);
-	// 						reduction_matrix.push_back(e);
-	// 					}
-	// 					break;
-	// 				}
-	// 			} else {
-	// }
-
-
-
   // Given a dim-dimensional simplex, find its lexicographically maximal cofacet with identical simplex weight
   auto zero_cofacet(index_t cns_rank, size_t dim) const -> index_t {
     const auto c_weight = simplex_weight(cns_rank, dim);
@@ -567,7 +629,7 @@ struct Cliqueser {
       const auto cofacet_weight = simplex_weight(cofacet, dim+1);
       if (cofacet_weight == c_weight){
         zero_cofacet = cofacet;
-        return false; // end enum shortcut 
+        return false; // zero persistence shortcut 
       }
       return true; 
     });
@@ -731,9 +793,11 @@ void _clique_wrapper(py::module& m, std::string suffix, Lambda&& init){
     })
     .def("p_simplices", [](const FT& M, const size_t p, const float threshold){
       auto p_simplices = std::vector< index_t >();
-      M.filter.p_simplices(p, threshold, [p, &p_simplices](auto b, [[maybe_unused]] auto e, [[maybe_unused]] const float weight){
-        auto r = combinatorial::rank_colex_k(b, p+1); // assumes b in reverse order
-        p_simplices.push_back(r);
+      M.filter.enum_simplex_vertices_r(p, [p, threshold, &p_simplices](auto b, [[maybe_unused]] auto e, [[maybe_unused]] const float weight){
+        if (weight <= threshold){
+          auto r = combinatorial::rank_colex_k(b, p+1); // assumes b in reverse order
+          p_simplices.push_back(r);
+        }
       });
       const auto out = py_array< index_t >(p_simplices.size(), p_simplices.data());
       return out;
@@ -779,7 +843,7 @@ void _clique_wrapper(py::module& m, std::string suffix, Lambda&& init){
     })
     // Constructs the p-simplices + weights in the filtration up to a given threshold, optionally checking to see if 
     // each simplex participates in an apparent pair as a positive or negative simplex
-    .def("build", [](const FT& M, const size_t p, const float threshold, bool check_pos = false, bool check_neg = false, const bool filter_pos = false){
+    .def("build", [](const FT& M, const size_t p, const float lower_threshold, const float upper_threshold, bool check_pos = false, bool check_neg = false, const bool filter_pos = false){
       auto p_simplices = std::vector< index_t >();
       auto p_weights = std::vector< float >();
       auto p_status = std::vector< int >();
@@ -808,13 +872,15 @@ void _clique_wrapper(py::module& m, std::string suffix, Lambda&& init){
       } else {
         apparent_check = []([[maybe_unused]] const index_t r){ return 0; };
       }
-      M.filter.p_simplices(p, threshold, [p, filter_pos, &apparent_check, &p_simplices, &p_weights, &p_status](auto b, [[maybe_unused]] auto e, const float w){
-        const auto r = combinatorial::rank_colex_k(b, p+1); // assumes b in reverse order
-        const auto af = apparent_check(r); // returns {-c, 0, +c}
-        if (!filter_pos || af <= 0){
-          p_simplices.push_back(r);
-          p_weights.push_back(w);
-          p_status.push_back(af);
+      M.filter.enum_simplex_vertices_r(p, [p, filter_pos, lower_threshold, upper_threshold, &apparent_check, &p_simplices, &p_weights, &p_status](auto b, [[maybe_unused]] auto e, const float w){
+        if (lower_threshold <= w && w <= upper_threshold){
+          const auto r = combinatorial::rank_colex_k(b, p+1); // assumes b in reverse order
+          const auto af = apparent_check(r);                  // returns {-c, 0, +c}
+          if (!filter_pos || af <= 0){
+            p_simplices.push_back(r);
+            p_weights.push_back(w);
+            p_status.push_back(af);
+          }
         }
       });
       py_array< index_t > ps_out_(p_simplices.size(), p_simplices.data());
