@@ -54,6 +54,7 @@ def get_index(k: int, i: int, j: int):
 def bisection_tree(i1, i2, j1, j2, mu: int, query_fun: Callable, creators: dict = {}, verbose: bool = False, validate: bool = True):
   if verbose: 
     print(f"({i1},{i2},{j1},{j2}) = {mu}")
+  assert mu >= 0, "Invalid multiplicity query: multiplicity must be non-negative"
   if mu == 0: 
     return
   # elif i1 == i2 and mu == 1:

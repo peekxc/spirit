@@ -177,6 +177,7 @@ class SpectralRI:
       apparent = whether to 
       discard = 
     """
+    from numbers import Number
     assert filter == "star" or filter == "flag" or filter == "metric"
     CM = clique_mod.__dict__['Cliqueser_' + filter]
     self.f_type = filter
@@ -184,11 +185,13 @@ class SpectralRI:
     self.cm.init(X) # format of X depends on f_type 
     # const size_t p, const float threshold, const bool check_pos = false, const bool check_neg = false, const bool filter_pos = false){
     P = range(self.max_dim + 1) if p is None else [int(p)]
+    lb, ub = (-np.inf, threshold) if isinstance(threshold, Number) else threshold
     for p in P:
-      p_simplices, p_weights, p_status = self.cm.build(p, threshold, apparent, apparent, discard)
+      p_simplices, p_weights, p_status = self.cm.build(p, lb, ub, apparent, apparent, discard)
       self._simplices[p] = p_simplices
       self._weights[p] = p_weights
       self._status[p] = p_status
+    return self
 
   def boundary_matrix(self, p: int, dtype = np.float32):
     if p > self.max_dim: 
@@ -307,8 +310,11 @@ class SpectralRI:
       ew = np.linalg.eigvalsh(LA.tosparse().todense())
       return np.sum(fun(ew))
 
-  def query(self, p: int, a: float, b: float, c: float = None, d: float = None, delta: float = 1e-12, summands: bool = False, **kwargs) -> float:
-    """Queries the dimension of the persistent homology class H_p(a,b,c,d). """
+  def query(self, p: int, a: float, b: float, c: float = None, d: float = None, delta: float = 0, summands: bool = False, **kwargs) -> float:
+    """Queries the number of persistent pairs from Hp that intersect the box (a,b] x (c,d].
+    
+    Note that if multiple pairs lie exactly on the boundary of the box, only a fraction of them will be reported. 
+    """
     q = p + 1
     if (c is None and d is None) or (c == -np.inf and d == np.inf):
       terms = [0]*4
@@ -341,36 +347,73 @@ class SpectralRI:
       terms = [self.spectral_sum(q, i, j, fun, **kwargs) for cc, (i,j) in enumerate(pairs)]
       return sum(s*t for s,t in zip([+1,-1,-1,+1], terms)) if not(summands) else terms
 
-  def _index_weights(self, p: int):
-    weights = np.hstack([self._weights[q] for q in range(p+2)])
-    ranks = np.hstack([self._simplices[q] for q in range(p+2)])
-    dims = np.hstack([np.repeat(q, len(self._simplices[q])) for q in range(p+2)])
+  def _index_weights(self):
+    D = len(self._weights)
+    weights = np.hstack([self._weights[q] for q in range(D)])
+    ranks = np.hstack([self._simplices[q] for q in range(D)])
+    dims = np.hstack([np.repeat(q, len(self._simplices[q])) for q in range(D)])
     wrd = np.array(list(zip(weights, ranks, dims)), dtype=[('weight', 'f4'), ('rank', 'i8'), ('dim', 'i4')])
     # wrd['rank'] = -wrd['rank']
     wrd_ranking = np.argsort(np.argsort(wrd, order=('weight', 'dim', 'rank'))) #  + 1
-    index_weights = { q : wrd_ranking[dims == q] for q in range(p+2) }
+    index_weights = { q : wrd_ranking[dims == q] for q in range(D) }
     return index_weights, wrd
 
   ## Queries the persistent pairs via a logarithmic number of rank computations on the index persistence plane 
   ## Iteratively re-weights 
-  def query_pairs(self, p: int, a: float, b: float, c: float, d: float, simplex_pairs: bool = False, **kwargs):
+  def query_pairs(self, p: int, a: float, b: float, c: float, d: float, delta: float = 1e-15, simplex_pairs: bool = False, **kwargs):
+    """Queries the persistent pairs via a logarithmic number of rank computations on the index persistence plane."""
+    assert a < b and b <= c and c < d, f"Invalid box ({a},{b}]x({c},{d}] given; must satisfy a < b <= c < d!" # see eq. 2.1 in the persistent measure paper 
+    self.query(p,a,b,c,d)
+    
     weights_backup = self._weights.copy()
-    self._weights, wrd = self._index_weights(p)
-    print(self._weights)
-    ai, bi = np.sum(wrd['weight'] < a), np.sum(wrd['weight'] < b)
-    ci, di = np.sum(wrd['weight'] < c), np.sum(wrd['weight'] < d)
+    self._weights, wrd = self._index_weights()
+    verbose: bool = kwargs.pop("verbose", False)
+
+    ## The real-valued weights, as a vector 
+    rw = np.hstack([weights_backup[q] for q in range(len(self._weights))])
+    iw = np.hstack([self._weights[q] for q in range(len(self._weights))])
+    # np.argsort(np.argsort(rw))
+
+    ## Translate the query into a *valid* query on the index persistence plane 
+    ## NOTE: The offsets are needed because we cannot handle degenerate boxes on index-persistence
+    ## We use sum instead of searchsorted because the weights are not ordered!
+    bi = np.sum(b >= rw) # np.sum(b >= rw) - 1 ## the left is a the tightest inclusive query (rounding down), the right is one more
+    di = np.sum(d >= rw)  # np.sum(d >= rw) -1 ## The right works on the index persistence plane
+    ai = max(np.sum(a >= rw) - 1, 0)# max(min(np.sum(rw <= a) - 1, bi-1), 0)
+    ci = max(np.sum(c >= rw) - 1, bi) # max(min(np.sum(rw <= c) - 1, di-1), bi)
+
+    ## Checks
+    rw_sorted = np.sort(rw)
+    assert b <= rw_sorted[bi], f"Index mapped b={b} must snap right to {rw_sorted[bi]}"
+    if bi > 0:
+      assert rw_sorted[bi-1] <= b, f"Index mapped b={b} must be larger than {rw_sorted[bi-1]}"
+    
+    assert rw_sorted[ai] <= a, f"Index mapped a={a} must snap left to {rw_sorted[ai]}"
+    if bi > 0:
+      assert rw_sorted[bi-1] <= b, f"Index mapped b={b} must be larger than {rw_sorted[bi-1]}"
+    # assert rw_sorted[di] <= d, f"Index mapped b={b} must snap left to {rw_sorted[bi]}"
+    # # if di < (len(rw_sorted) - 1):
+    # #   assert d < rw_sorted[di+1], f"Index mapped d={d} must be less than outer index {rw_sorted[di+1]}"
+    # assert True if di == 0 else rw_sorted[di-1] < d and d <= rw_sorted[di], "Index mapped b must include the b interval"
+    print(f"Index translated box: [{ai}, {bi}] x [{ci}, {di}]")
+    print(f"Function translated box: [{rw_sorted[ai]:.3f}, {rw_sorted[bi]:.3f}] x [{rw_sorted[ci]:.3f}, {rw_sorted[di]:.3f}]")
+
+    ## Do the divide and conquer pair search
     kwargs['method'] = kwargs.get('method', 'cholesky')
-    print(f"Box: [{ai}, {bi}] x [{ci}, {di}]")
-    pairs = points_in_box(ai,bi,ci,di,lambda i,j,k,l: self.query(p,i,j,k,l,**kwargs), kwargs.pop("verbose", False))
-    print(pairs)
+    pairs = points_in_box(ai,bi,ci,di,lambda i,j,k,l: self.query(p,i,j,k,l,**kwargs), verbose)
+    if verbose:
+      print(f"Index translated box: [{ai}, {bi}] x [{ci}, {di}]")
+      print(pairs)
+    
+    ## Reformat the pairs in the function persistence plane
     q = p + 1
     p_dgm = []
     for pos_ind, neg_ind in pairs.items():
       pos_idx = np.flatnonzero(self._weights[p] == pos_ind)
       neg_idx = np.flatnonzero(self._weights[q] == neg_ind)
       assert len(pos_idx) == 1 and len(neg_idx) == 1, "Failed to re-index the pairs"
-      pw, rp = weights_backup[p][pos_idx], self._simplices[p][pos_idx]
-      nw, rq = weights_backup[q][neg_idx], self._simplices[q][neg_idx] 
+      pw, rp = weights_backup[p][pos_idx].item(), self._simplices[p][pos_idx]
+      nw, rq = weights_backup[q][neg_idx].item(), self._simplices[q][neg_idx] 
       p_dgm.append([pw, nw] if not simplex_pairs else [pw, nw, rp, rq])
     self._weights = weights_backup
     dgm_dtype = [("birth", "f4"), ("death", "f4")] if not simplex_pairs else [("birth", "f4"), ("death", "f4"), ("creator", "i8"), ("destroyer", "i8")]
