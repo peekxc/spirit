@@ -1,7 +1,7 @@
 import numpy as np 
 import splex as sx 
 from spirit.query import bisection_tree, points_in_box, find_negative
-from scipy.spatial.distance import pdist
+from scipy.spatial.distance import pdist, squareform, cdist
 from ripser import ripser
 from pbsig.persistence import ph, generate_dgm, low_entry
 from spirit.query import _generate_bfs, midpoint, bisection_tree, points_in_box
@@ -90,11 +90,14 @@ def test_pairing_uniqueness():
       assert t3 == t3_test
       assert t4 == t4_test
 
+## These change based on the setting of delta! 
+## delta == small constant <=> top right inclusive 
+## delta == 0 <=> top left inclusive
 def test_box_base_cases():
   ## Test all the interpretations of the boxes
   S, K, R, V, dgms_index = index_pers_example()
-  # show_pers(K, dgms_index, 1)
   RI = index_pers_RI(K)
+  # show_pers(K, dgms_index, 0, True)
   assert RI.query(0, 0, 4, 4, 8) == 2 
   assert RI.query(0, 0, 1, 5, 6) == 1
   assert RI.query(0, 0, 2, 5, 6) == 1
@@ -108,6 +111,7 @@ def test_box_base_cases():
   assert RI.query(0, 2, 2, 7, 8) == 0
   assert RI.query(0, 2, 2, 5, 5) == 0
   assert RI.query(0, 2, 4, 9, 9) == 0
+  # show_pers(K, dgms_index, 1, True)
   assert RI.query(1, 7, 9, 13, 15) == 1
   assert RI.query(1, 7, 8, 13, 14) == 1
   assert RI.query(1, 8, 9, 14, 15) == 0
@@ -166,10 +170,10 @@ def test_bisection_oracle():
     # show_pers(K, dgms_index, 1)
 
     def query_oracle(i: int, j: int, k: int, l: int) -> int:
-      # in_birth = np.logical_and(i <= H1_b, H1_b <= j)
-      # in_death = np.logical_and(k <= H1_d, H1_d <= l)
-      in_birth = np.logical_and(i < H1_b, H1_b <= j)
-      in_death = np.logical_and(k < H1_d, H1_d <= l)
+      # in_birth = np.logical_and(i <= H1_b, H1_b <= j) # Chen's version 
+      # in_death = np.logical_and(k <= H1_d, H1_d <= l) # Chen's version 
+      in_birth = np.logical_and(i < H1_b, H1_b <= j)    # Modified version 
+      in_death = np.logical_and(k < H1_d, H1_d <= l)    # Modified version 
       return np.sum(np.logical_and(in_birth, in_death))
 
     ## Generate all persistence pairs in the diagram
@@ -255,22 +259,98 @@ def test_recover_diagram_index():
   assert np.allclose(dgms_index[0]['death'][dgms_index[0]['death'] != np.inf], all_pairs['death'])
 
 def test_rips_increasing():
-  np.random.seed(1234)
-  N = 8
-  theta = np.linspace(0, 2*np.pi, N, endpoint=False)
-  X = np.c_[np.cos(theta), np.sin(theta)] + np.random.uniform(size=(N,2), low=0, high=0.01)
-  K, dgms = rips_example(X, index=False)
-  dX = pdist(X)
-  H1_b, H1_d = dgms[1]['birth'], dgms[1]['death'] # 15, 41
+  M = 15
+  ## Things to vary include data size, noise amount, whether to discard apparent, the box size, and whether restricting to the box changes things
+  ## Also whether direct matches cholesky
+  for N in [8, 16, 32, 64]:
+    for ii in range(M):
+      np.random.seed(1234 + ii)
+      theta = np.linspace(0, 2*np.pi, N, endpoint=False)
+      X = np.c_[np.cos(theta), np.sin(theta)] + np.random.uniform(size=(N,2), low=0, high=0.15)
+      dX = pdist(X)
+      dgms1 = ripser(squareform(dX), distance_matrix=True)['dgms'][1]
+      H1_b, H1_d = dgms1[0][0], dgms1[0][1]
+      # K = rips_example(X, index=False)
+      # S = sx.rips_complex(dX, radius=sx.enclosing_radius(dX), p=2)
+      # H1_b, H1_d = dgms[1]['birth'], dgms[1]['death'] # 15, 41
 
-  RI = SpectralRI(n=len(X), max_dim=2)
-  RI.construct(dX, p=0, apparent=False, discard=False, filter="flag")
-  RI.construct(dX, p=1, apparent=True, discard=False, filter="flag")
-  RI.construct(dX, p=2, apparent=True, discard=True, filter="flag")
-  RI._D[0] = RI.boundary_matrix(0)
-  RI._D[1] = RI.boundary_matrix(1)
-  RI._D[2] = RI.boundary_matrix(2)
+      ER = sx.enclosing_radius(dX)
+      RI = SpectralRI(n=len(X), max_dim=2)
+      RI.construct_flag(dX, p=0, apparent=False, discard=False, filter="flag")
+      RI.construct_flag(dX, p=1, apparent=True, discard=False, threshold=2*ER, filter="flag")
+      RI.construct_flag(dX, p=2, apparent=True, discard=True, threshold=2*ER, filter="flag")
+      RI._D[0] = RI.boundary_matrix(0)
+      RI._D[1] = RI.boundary_matrix(1)
+      RI._D[2] = RI.boundary_matrix(2)
+
+      a = H1_b * 0.95
+      b = H1_b * 1.05
+      c = H1_d * 0.95
+      d = H1_d * 1.05
+      assert RI.query(1, a,b,c,d, method="cholesky") == 1
+      pair = RI.query_pairs(1, a,b,c,d, method="cholesky", verbose=True)
+      assert len(pair) == 1
+      assert np.all(pair['birth'] == H1_b)
+      assert np.all(pair['death'] == H1_d)
+
+    print(N)
+    
+def test_query_api():
+  S, K, R, V, dgms_index = index_pers_example()
+  RI = index_pers_RI(K)
+  show_pers(K, dgms_index, 1, True)
   
+  pass 
+  
+def test_comb_laplacian_api():
+
+  pass
+
+# def test_kernel():
+  # from pbsig.persistence import pHcol, low_entry
+  # from scipy.sparse import lil_matrix
+  # K, weights = rips_example(X, index=False)
+  # D2 = sx.boundary_matrix(K, 2).tolil()
+  # R2 = D2.copy()
+  # V2 = lil_matrix(np.eye(D2.shape[1]))
+  # pHcol(R2, V2)
+  # zero_ind = np.flatnonzero(low_entry(R2) == -1)
+  
+  
+  # (D2[:,[9]].T @ R2).data
+  # D2[:,[9]]
+
+  # np.abs(D2.todense()).sum(axis=0)
+
+
+    # # RI.query(1,60,61,1781,2346)
+
+    # ## Works with method="direct"
+
+    # from spirit.apparent_pairs import DEBUG_VAR
+
+    # IW, wrd = RI._index_weights()
+    # RI._weights = IW
+    # RI.query(1,60,61,1781,2346)
+
+    # RI.lower_left(a,d,2).D
+    # np.linalg.matrix_rank(RI.lower_left(a,d,2).D.todense())
+    
+    # np.linalg.matrix_rank(DEBUG_VAR.D.todense())
+    # from sksparse.cholmod import cholesky_AAt
+    # F = cholesky_AAt(DEBUG_VAR.D.tocsc(), beta=1e-6).D()
+    # F = np.sort(F)
+    # F_diff = (np.diff(F)/F[:-1])
+    # nullity = np.argmax(F_diff) + 1
+    # len(F) - nullity
+    
+    # ## https://scicomp.stackexchange.com/questions/32762/cholmod-condition-number-estimate
+    # rcond_lb = (np.min(F)/np.max(F)) # **2
+    # cond_stable = 1.0 / (len(F) * np.finfo(np.float32).eps)
+
+    # threshold = np.max(F) * max(DEBUG_VAR.D.shape) * np.finfo(np.float32).eps
+    # sum(F > threshold)
+
   # show_pers(K, dgms, p=1, index=False)
   # print(dgms[1])
   # rank_to_comb(5, k=2, order='colex', n=len(X)) # rank 5 <=> edge (2,3) which matches simplex pairs

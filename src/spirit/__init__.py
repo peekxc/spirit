@@ -1,6 +1,7 @@
 import importlib.metadata
 __version__ = importlib.metadata.version("spirit")
 
+from .apparent_pairs import SpectralRI
 
 ## Based on Numpy's usage: https://github.com/numpy/numpy/blob/v1.25.0/numpy/lib/utils.py#L75-L101
 def get_include():

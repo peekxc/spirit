@@ -335,6 +335,60 @@ struct MetricFilter {
   // }
 };
 
+template< typename T >
+struct GenericFilter {
+  using value_type = T;
+  
+  const size_t n; 
+  size_t max_dim;
+  std::vector< std::map< index_t, T > > weight_map; 
+  
+  GenericFilter(const size_t n_) : n(n_){}
+  GenericFilter(const size_t n_, const size_t d_, std::vector< std::map< index_t, T > > wm) : n(n_), max_dim(d_), weight_map(wm) {}
+
+  // template< std::integral I >
+  template< typename Iter >
+  auto simplex_index(Iter b, Iter e) const -> T {
+    const index_t d = std::distance(b,e);
+    const index_t r = combinatorial::rank_colex_k(b, d);
+    // std::cout << "dim index: " << d - 1 << ", rank: " << r << std::endl;
+    return weight_map[d-1].at(r);
+  };
+
+  template< typename Lambda > 
+  void enum_simplex_vertices(const size_t p, Lambda&& f) const {
+    // std::cout << "here2: maxdim = " << max_dim << std::endl;
+    if (p >= max_dim){ return; }
+    auto vertices = std::vector< size_t >(16, 0);
+    // std::cout << "here2" << std::endl;
+    for (const auto& [r, r_weight] : weight_map[p]){
+      vertices[15] = r;
+      unrank_colex< false >(vertices.rbegin(), vertices.rbegin()+1, n, p + 1, vertices.begin());
+      f(vertices.begin(), vertices.begin() + (p+1), r_weight);
+    }
+  };
+
+  template< typename Lambda > 
+  void enum_simplex_vertices_r(const size_t p, Lambda&& f) const {
+    if (p > max_dim){ 
+      // std::cout << "p " << "(" << p << ") " << ">" << max_dim << std::endl;
+      return; 
+    }
+    // std::cout << "here " << "(" << p << ") " << weight_map[p].size() << std::endl;
+    auto vertices = std::array< index_t, 16 >{};
+    // for (const auto& [r, r_weight] : weight_map[p]){
+    for (auto it = weight_map[p].rbegin(); it != weight_map[p].rend(); ++it){
+      const index_t r = it->first; 
+      const T r_weight = it->second; 
+      // std::cout << "p = " << p << ", r = " << r << ", f(r) = " << r_weight << std::endl;
+      vertices[15] = r;
+      unrank_colex< false >(vertices.rbegin(), vertices.rbegin()+1, n, p + 1, vertices.begin());
+      f(vertices.begin(), vertices.begin() + (p+1), r_weight);
+    }
+  };
+};
+
+
 using combinatorial::BC; // use pre-allocated BC table
 
 // Enumerates the facets on the boundary of 'simplex'
@@ -462,7 +516,7 @@ struct CoboundaryGenerator {
   CoboundaryGenerator(const index_t simplex, const index_t dim, const index_t n)
   : idx_below(simplex), idx_above(0), j(n - 1), k(dim + 1) {
     if (BC.BT.size() <= size_t(dim + 2) || BC.BT.at(0).size() < n){ 
-      BC.precompute(n, dim + 2); 
+      BC.precompute(n + 2, dim + 4); 
     } 
   }
   
@@ -516,7 +570,7 @@ struct Cliqueser {
   Indexer filter; 
   
   Cliqueser(const size_t _n, const size_t max_dim = 2) : n(_n), filter(_n) {
-    BC.precompute(n, max_dim+2);
+    BC.precompute(n + 2, max_dim+4);
   }
 
   // Given simplex rank + its dimension, retrieve its vertices (store locally)
@@ -614,7 +668,7 @@ struct Cliqueser {
         // If in addition it does not have an apparent zero cofacet, then we save it
         pos_edges.push_back(e);
         if (apparent_zero_cofacet(e.first, 1) == -1){
-          std::cout << "e: " << e.first << " is non-apparent" << std::endl;
+          // std::cout << "e: " << e.first << " is non-apparent" << std::endl;
         }
       }
     }
@@ -702,6 +756,7 @@ namespace py = pybind11;
 
 template< typename F >
 using py_array = py::array_t< F, py::array::f_style | py::array::forcecast >;
+
 
 template< SimplexIndexer Indexer, typename Lambda >
 void _clique_wrapper(py::module& m, std::string suffix, Lambda&& init){
@@ -793,7 +848,7 @@ void _clique_wrapper(py::module& m, std::string suffix, Lambda&& init){
     })
     .def("p_simplices", [](const FT& M, const size_t p, const float threshold){
       auto p_simplices = std::vector< index_t >();
-      M.filter.enum_simplex_vertices_r(p, [p, threshold, &p_simplices](auto b, [[maybe_unused]] auto e, [[maybe_unused]] const float weight){
+      M.filter.enum_simplex_vertices_r(p, [p, threshold, &p_simplices](auto b, [[maybe_unused]] auto e, const float weight){
         if (weight <= threshold){
           auto r = combinatorial::rank_colex_k(b, p+1); // assumes b in reverse order
           p_simplices.push_back(r);
@@ -918,10 +973,30 @@ PYBIND11_MODULE(_clique, m) {
     C.filter.points = std::move(point_cloud);
   });
 
+  _clique_wrapper< GenericFilter< float > >(m, "_generic", [](Cliqueser< GenericFilter< float > >& C, std::vector< std::map< index_t, float > > weight_map){
+    C.filter.max_dim = weight_map.size() - 1;
+    C.filter.weight_map = weight_map;
+    // for (size_t p = 0; p <= C.filter.max_dim; ++p){
+    //   std::cout << "weight map sz: " << C.filter.weight_map[p].size() << std::endl;
+    // }
+  });
+
+  m.def("enum_boundary", [](const index_t simplex, const index_t dim, const index_t n){
+    if (BC.BT.size() <= size_t(dim+1) || BC.BT.at(0).size() < size_t(n)){
+      BC.precompute(n+2, dim+3);
+    }
+    auto c_out = std::vector< index_t >();
+    enum_boundary(n, simplex, dim, [&](const index_t cofacet){
+      c_out.push_back(cofacet);
+      return true; 
+    });
+    return py::cast(c_out);
+  });
+
   m.def("enum_coboundary", [](const index_t simplex, const index_t dim, const index_t n, bool all_cofacets = true){
     // const auto R = CoboundaryRange(simplex, dim, n);
     if (BC.BT.size() <= size_t(dim+2) || BC.BT.at(0).size() < size_t(n)){
-      BC.precompute(n, dim+2);
+      BC.precompute(n+2, dim+4);
     }
     auto c_out = std::vector< index_t >();
     if (all_cofacets){
@@ -937,6 +1012,7 @@ PYBIND11_MODULE(_clique, m) {
     }
     return py::cast(c_out);
   });
+
   m.def("compress_coo", [](
     const py_array< int >& p_inc, const py_array< int >& q_inc, 
     const py_array< int >& r_ind, 
@@ -980,7 +1056,7 @@ PYBIND11_MODULE(_clique, m) {
 
     // Make sure we've precomputed enough binomial coefficients  
     if (BC.BT.size() < p + 2 || BC.BT.at(0).size() < n){
-      BC.precompute(n, p+2);
+      BC.precompute(n+2, p+4);
     }
   
     // TODO: break thi sinto three loops and parallelize
@@ -988,11 +1064,11 @@ PYBIND11_MODULE(_clique, m) {
     for (auto j = 0; j < p_simplices.size(); ++j){
       s = -1.0; 
       enum_boundary(n, ps[j], p, [&](index_t r){
-        s *= -1; 
         ri[ii] = r;
         ci[ii] = j;
         di[ii] = s;
         ++ii;
+        s *= -1; 
         return true; 
       });
     } 

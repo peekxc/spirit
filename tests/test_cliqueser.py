@@ -164,6 +164,39 @@ def test_init_basics():
   assert np.allclose(er, pr)
   assert np.allclose(tr, qr)
 
+def test_init_generic():
+  X = np.random.uniform(size=(30,2))
+  for eps in [sx.enclosing_radius(X), np.inf]:
+    C = clique_mod.Cliqueser_generic(len(X), 2)
+    S = sx.rips_complex(pdist(X), p=3, radius=eps)
+    f = sx.flag_filter(pdist(X))
+    
+    ## Test the weight map works for evaluating the simplex weight
+    weight_map = []
+    for p in range(3):
+      rp = comb_to_rank(sx.faces(S,p=p), order='colex', n=len(X))
+      wp = f(sx.faces(S,p=p))
+      weight_map.append(dict(zip(rp, wp)))
+    C.init(weight_map)
+    for p in range(3):
+      assert all([np.isclose(weight_map[p][r], C.simplex_weight(r, p)) for r in weight_map[p].keys()])
+    
+    ## Test we recover the same simplices
+    for p in range(3):
+      test_edges = np.sort(C.p_simplices(p, np.inf))
+      true_edges = np.sort(comb_to_rank(sx.faces(S,p), order='colex', n=len(X)))
+      assert np.allclose(test_edges, true_edges)
+
+    C.apparent_zero_cofacet(0, 1)
+
+  ## Test all the simplices up the enclosing radius are the same
+  # pr = np.sort(comb_to_rank(sx.faces(S,p=1)))
+  # qr = np.sort(comb_to_rank(sx.faces(S,p=2)))
+  # er = np.sort(C.p_simplices(1, sx.enclosing_radius(X)*2))
+  # tr = np.sort(C.p_simplices(2, sx.enclosing_radius(X)*2))
+  # assert np.allclose(er, pr)
+  # assert np.allclose(tr, qr)
+
 def test_coboundary_gen():
   from itertools import product
   n = 16
