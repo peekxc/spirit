@@ -1,5 +1,5 @@
 ## Extension modules
-extensions = ['_clique']
+extensions = ['_clique'] # '_ripser'
 foreach ext: extensions
   py.extension_module(
     ext,
@@ -14,7 +14,8 @@ python_sources = [
   '__init__.py', 
   '__version__.py', 
   'apparent_pairs.py', 
-  'query.py'
+  'query.py', 
+  'filtration.py'
 ]
 
 ## Print install directory

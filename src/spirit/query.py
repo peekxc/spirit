@@ -8,7 +8,7 @@ def midpoint(i: int, j: int) -> int:
 
 def _generate_boxes(i: int, j: int, res: dict = {}, index: int = 0):
   """Recursively generates boxes in DFS fashion"""
-  r = (i, (i+j) // 2, (i+j) // 2 + 1, j) # Chens version
+  # r = (i, (i+j) // 2, (i+j) // 2 + 1, j) # Chens version
   r = (i, (i+j) // 2, (i+j) // 2, j)     # Modified version
   res[index] = r
   if abs(i-j) <= 1: 
@@ -26,7 +26,7 @@ def _generate_bfs(i: int, j: int):
     if abs(i-j) <= 1: 
       continue
     else:
-      # r = (i, (i+j) // 2, (i+j) // 2 + 1, j) #s chen version 
+      # r = (i, (i+j) // 2, (i+j) // 2 + 1, j) # Chens version 
       r = (i, (i+j) // 2, (i+j) // 2, j) # modified version
       res[index] = r
       d.appendleft((i, (i+j) // 2))
@@ -54,7 +54,7 @@ def get_index(k: int, i: int, j: int):
 def bisection_tree(i1, i2, j1, j2, mu: int, query_fun: Callable, creators: dict = {}, verbose: bool = False, validate: bool = True):
   if verbose: 
     print(f"({i1},{i2},{j1},{j2}) = {mu}")
-  assert mu >= 0, "Invalid multiplicity query: multiplicity must be non-negative"
+  assert mu >= 0, f"Invalid multiplicity query: multiplicity {mu} at box [{i1},{i2}] x [{j1},{j2}] must be non-negative"
   if mu == 0: 
     return
   # elif i1 == i2 and mu == 1:
@@ -113,20 +113,21 @@ def points_in_box(i: int, j: int, k: int, l: int, query: Callable[tuple, int], v
   pairs = { b : find_negative(b, j1, j2, query, verbose) for b, (j1, j2) in positive.items() }
   return pairs
 
-def ph_pairs(K: sx.ComplexLike, p: int, query: Callable):
-  m: int = len(K)
-  boxes = {}
-  _generate_bfs(0, m, boxes) ## todo: remove and replace with log(n) indexing function
-  a, b = 0, len(K)
-  # query(a, midpoint(a,b), midpoint(a,b), b)
 
-def _index_persistence(K: sx.FiltrationLike, **kwargs):
-  from pbsig.persistence import ph
-  K = sx.RankFiltration(K)
-  K.order = 'reverse colex'
-  K_index = sx.RankFiltration({i:s for i,(d,s) in enumerate(K)}.items())
-  dgms_index = ph(K_index, simplex_pairs=True)
-  return dgms_index
+# def ph_pairs(K: sx.ComplexLike, p: int, query: Callable):
+#   m: int = len(K)
+#   boxes = {}
+#   _generate_bfs(0, m, boxes) ## todo: remove and replace with log(n) indexing function
+#   a, b = 0, len(K)
+#   # query(a, midpoint(a,b), midpoint(a,b), b)
+
+# def _index_persistence(K: sx.FiltrationLike, **kwargs):
+#   from pbsig.persistence import ph
+#   K = sx.RankFiltration(K)
+#   K.order = 'reverse colex'
+#   K_index = sx.RankFiltration({i:s for i,(d,s) in enumerate(K)}.items())
+#   dgms_index = ph(K_index, simplex_pairs=True)
+#   return dgms_index
 
 ## TODO: 
 # 1. Write Points-in-box function (bisection tree + destroyer)
