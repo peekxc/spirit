@@ -1,0 +1,341 @@
+## Key technical observation
+
+:::{.fragment }
+
+![](images/rv_ll.png){width=950 height=100% fig-align="center" style="margin: 0; padding: 0;"}
+
+:::
+
+:::{.fragment style="text-align: center;"}
+
+__Pairing uniqueness lemma__<sup>1</sup>  $\implies \; \mathrm{rank}(R^{i,j}) = \mathrm{rank}(\partial^{i,j})$
+
+:::
+
+:::{.fragment style="text-align: center;"}
+$$ 
+\begin{equation*}
+\Rightarrow \beta_p^{i,j} = \lvert C_p(K_i) \rvert - \mathrm{rank}(\partial_p^{1,i}) - \mathrm{rank}(\partial_{p+1 }^{1,j}) + \mathrm{rank}(\partial_{p+1}^{i + 1, j} ) 
+\end{equation*}
+$$
+
+$\Leftrightarrow$ Can deduce $\mathrm{dgm}$'s from ranks of "lower-left" blocks of $\partial_p(K_\bullet)$
+
+:::
+
+:::{.aside}
+
+1. Cohen-Steiner, David, Herbert Edelsbrunner, and Dmitriy Morozov. "Vines and vineyards by updating persistence in linear time." Proceedings of the twenty-second annual symposium on Computational geometry. 2006.
+
+:::
+
+## Key technical observation
+
+$$ 
+\begin{equation}
+\mathrm{rank}(R^{i,j}) = \mathrm{rank}(\partial^{i,j})  
+\end{equation}
+$$
+ 
+<hr>
+
+:::{.fragment}
+$$ 
+\begin{equation}
+(1) \Rightarrow \beta_p^{i,j} = \lvert C_p(K_i) \rvert - \mathrm{rank}(\partial_p^{1,i}) - \mathrm{rank}(\partial_{p+1 }^{1,j}) + \mathrm{rank}(\partial_{p+1}^{i + 1, j} ) 
+\end{equation}
+$$
+
+:::
+
+
+:::{.fragment}
+
+$$ 
+\begin{equation}
+(2) \Rightarrow \mu_p^{R} = \mathrm{rank}(\partial_{p+1}^{j + 1, k})  - \mathrm{rank}(\partial_{p+1}^{i + 1, k})  - \mathrm{rank}(\partial_{p+1}^{j + 1, l}) + \mathrm{rank}(\partial_{p+1}^{i + 1, l})  
+\end{equation}
+$$
+
+:::
+
+:::{.fragment}
+
+$(1)$ often used to show correctness of reduction, but far more general, as it implies:
+
+:::
+
+:::{.fragment}
+
+<div style="padding-left: 1em; border: 1px solid black; margin: 2em; ">
+__Corollary [@bauer2022keeping]__: Any algorithm that preserves the ranks of the submatrices $\partial^{i,j}$ for all $i,j \in \{ 1, \dots, n \}$ is a valid barcode algorithm.
+</div>
+
+:::
+
+<!-- <br/> 
+
+:::{.fragment}
+
+$$
+	{\color{green} \mu_p^{R}} = 
+	{\color{red} \mathrm{rank}}\begin{bmatrix} {\color{blue} \partial_{p+1}^{j + 1, k}} & 0 \\
+	0 & {\color{blue} \partial_{p+1}^{i + 1, l} }
+	\end{bmatrix}
+	- 
+	{\color{red} \mathrm{rank}}\begin{bmatrix} {\color{blue} \partial_{p+1}^{i + 1, k}} & 0 \\
+	0 & {\color{blue} \partial_{p+1}^{j + 1, l} }
+	\end{bmatrix}
+$$
+
+::: -->
+
+:::{.aside}
+
+@edelsbrunner2000topological noted (1) in passing showing correctness of reduction; @dey2022computational explicitly prove (2); (3) was used by @chen2011output. (2) & (3) are connected to relative homology.
+
+:::
+
+
+## Restrictions & Implications {visibility="hidden"}
+
+
+:::{style="text-size: 14px; text-align: center; margin-top: 1em;"}
+
+We restrict<sup>1</sup> to persistence with field coefficients in $\mathbb{R}$
+
+:::
+
+<br/> 
+
+$$
+	{\color{green} \mu_p^{R}} = 
+	{\color{red} \mathrm{rank}}\begin{bmatrix} {\color{blue} \partial_{p+1}^{j + 1, k}} & 0 \\
+	0 & {\color{blue} \partial_{p+1}^{i + 1, l} }
+	\end{bmatrix}
+	- 
+	{\color{red} \mathrm{rank}}\begin{bmatrix} {\color{blue} \partial_{p+1}^{i + 1, k}} & 0 \\
+	0 & {\color{blue} \partial_{p+1}^{j + 1, l} }
+	\end{bmatrix}
+$$
+
+<br/>
+
+:::{style="text-size: 14px; text-align: center;"}
+
+:::{.fragment}
+
+There are advantages to preferring _this_ expression for $\mu_p^R$
+
+:::
+
+<ol>
+:::{.fragment}
+  <li> <span style="color: blue;"> Inner terms </span> are _unfactored_ </li>
+:::
+:::{.fragment}
+  <li> Variational perspectives on <span style="color: red;">rank function </span> well-studied ($\mathbb{R}$)</li>
+:::
+:::{.fragment}
+  <li> Theory of <span style="color: green;">_persistent measures_<sup>2</sup></span> readily applicable </li>
+:::
+</ol>
+
+:::
+
+::: aside 
+
+1. Or any zero characteristic field
+2. Chazal, Frédéric, Vin De Silva, Marc Glisse, and Steve Oudot. 2016. The Structure and Stability of Persistence Modules.
+
+:::
+
+
+
+## Restrictions & Implications {visibility="hidden"}
+
+
+:::{style="text-size: 14px; text-align: center; margin-top: 1em;"}
+
+We restrict<sup>1</sup> to persistence with field coefficients in $\mathbb{R}$
+
+:::
+
+<br/> 
+
+$$
+	{\color{green} \mu_p^{R}} = 
+	{\color{red} \mathrm{rank}}\begin{bmatrix} {\color{blue} \mathcal{L}_{p}^{j + 1, k}} & 0 \\
+	0 & {\color{blue} \mathcal{L}_{p}^{i + 1, l} }
+	\end{bmatrix}
+	- 
+	{\color{red} \mathrm{rank}}\begin{bmatrix} {\color{blue} \mathcal{L}_{p}^{i + 1, k}} & 0 \\
+	0 & {\color{blue} \mathcal{L}_{p}^{j + 1, l} }
+	\end{bmatrix}
+$$
+
+<br/>
+
+:::{style="text-size: 14px; text-align: center;"}
+
+There are advantages to preferring _this_ expression for $\mu_p^R$
+
+<ol>
+  <li> <span style="color: blue;"> Inner terms </span> are _unfactored_ </li>
+  <li> Variational perspectives on <span style="color: red;">rank function </span> well-studied ($\mathbb{R}$)</li>
+  <li> Theory of <span style="color: green;">_persistent measures_<sup>2</sup></span> readily applicable </li>
+</ol>
+
+:::
+
+::: aside 
+
+1. Or any zero characteristic field
+2. Chazal, Frédéric, Vin De Silva, Marc Glisse, and Steve Oudot. 2016. The Structure and Stability of Persistence Modules.
+
+:::
+
+## Relaxing the rank function {visibility="hidden"}
+
+:::{style="text-align: center"} 
+
+__Relaxation__: &nbsp;&nbsp; Approximate $\mathrm{rank}$ with _matrix functions_ [@bhatia2013matrix]
+
+:::
+
+
+:::{style="list-style-type: none; align=center;"}
+
+<div class="columns">
+
+<div class="column">
+
+::: {.fragment .fade-in-then-semi-out fragment-index=1 style="text-align: left"}
+
+$\quad\quad\quad\quad \mathrm{rank}(X) = \sum \, \mathrm{sgn}_+(\sigma_i)$
+
+:::
+
+::: {.fragment .fade-in-then-semi-out fragment-index=2 style="text-align: left"}
+
+$\quad\quad\quad\quad \hphantom{\mathrm{rank}(X)}\approx \sum\limits_{i=1}^n \, \phi(\sigma_i, \tau) \phantom{\int\limits_{-\infty}^x}$
+
+:::
+
+::: {.fragment .fade-in-then-semi-out fragment-index=3 style="text-align: left"}
+
+$\quad\quad\quad\quad \hphantom{\mathrm{rank}(X)}=\lVert \Phi_\tau(X) \rVert_\ast$
+
+:::
+
+</div>
+
+<div class="column">
+
+::: {.fragment .fade-in-then-semi-out fragment-index=1 style="text-align: right"}
+
+where $\quad\quad$ $X = U \mathrm{Diag}(\mathbf{\sigma})V^T$
+
+:::
+
+::: {.fragment .fade-in-then-semi-out fragment-index=2 style="text-align: right"}
+
+where $\quad \phi(x, \tau) \triangleq \int\limits_{-\infty}^x\hat{\delta}(z, \tau) dz$
+
+:::
+
+::: {.fragment .fade-in-then-semi-out fragment-index=3 style="text-align: right"}
+
+where $\quad \Phi_\tau(X) \triangleq \sum_{i=1}^n \phi(\sigma_i, \tau) u_i v_i^T$
+
+:::
+
+</div>
+
+</div>
+
+::: {.fragment .fade-in-then-semi-outstyle="text-align: center"}
+
+$\Phi_\tau(X)$ is a _Löwner operator_ when $\phi$ is _operator monotone_ [@jiang2018unified]
+
+$$ A \succeq B \implies \Phi_\tau(A) \succeq \Phi_\tau(B) $$
+
+:::
+
+:::{.fragment style="text-align: center"}
+
+Closed-form proximal operators exist when $\Phi_\tau$ convex [@beck2017first]
+
+Often used in nonexpansive mappings [@bauschke2011convex]
+
+:::
+
+:::
+
+## Relaxing the rank function
+
+<hr/> 
+
+<!-- :::{.fragment .fade-in-then-semi-out fragment-index=1 style="text-align: center"} 
+
+__Relaxation__: &nbsp;&nbsp; Approximate $\mathrm{rank}$ by approximating the _sign_ function 
+
+::: -->
+
+
+:::{style="list-style-type: none; align=center;"}
+
+::: {.fragment .fade-in-then-semi-out fragment-index=1 style="text-align: center"}
+
+$$\mathrm{rank}(X) = \mathrm{rank}(X X^T) = \sum_{i=1}^n \, \mathrm{sgn}_+(\lambda_i) \approx \sum_{i=1}^n \, \phi(\lambda_i, \tau) $$
+
+:::
+
+::: {.fragment .fade-in-then-semi-out fragment-index=2 style="text-align: left"}
+
+$$\text{ where } \phi(x, \tau) \triangleq \int\limits_{-\infty}^x\hat{\delta}(z, \tau) dz \text{ for a smoothed Dirac measure } \hat{\delta}^1$$
+
+<!-- \hat{\delta}(x, \tau) = \frac{1}{\nu(\tau)} p\left(\frac{x}{\nu(\tau)}\right), \quad \tau > 0, \quad \nu \text{ inc. } -->
+:::
+
+
+::: {.fragment .fade-in-then-semi-out fragment-index=3 style="text-align: center"}
+
+$\phi : \mathbb{R} \to \mathbb{R}$ induces a unique$^2$ _spectral function_ $F: S_{n} \to \mathbb{R}$ via its _trace_: 
+
+$$\mathrm{tr}(\Phi_\tau(X)) = \sum\limits_{i=1}^n \phi(\lambda_i, \tau), \quad \Phi_\tau(X) \triangleq U \phi_\tau(\Lambda) U^T $$
+
+:::
+
+
+<!-- ::: {.fragment .fade-in-then-semi-out fragment-index=4 style="text-align: center"}
+
+The operator $\Phi_\tau(X) \in \mathbb{R}^{n \times n}$ is called a _Löwner operator_ [@bhatia2013matrix]
+
+::: -->
+
+
+<!-- ::: {.fragment .fade-in-then-semi-out fragment-index=4 style="text-align: center"}
+
+$\Phi_\tau(X)$ is a _Löwner operator_ when $\phi$ is _operator monotone_ [@jiang2018unified]
+
+$$ A \succeq B \implies \phi_\tau(A) \succeq \phi_\tau(B) $$
+
+:::
+
+:::{.fragment style="text-align: center"}
+
+Closed-form proximal operators exist when $\phi_\tau$ convex + minor conditions$^1$ 
+
+::: -->
+
+:::
+
+<aside class="aside" style="text-align: center !important;">
+
+\(1\) Any $\hat{\delta}$ of the form $\nu(1/\tau) p (z \cdot \nu (1/\tau))$ where $p$ is a density function and $\nu$ positive and increasing is sufficient.
+
+\(2\) See Theorem 1.2 of @jiang2018unified for uniqueness conditions.
+<!-- \(1\) See @beck2017first and @bauschke2011convex for existence and optimality conditions.  -->
+
+</aside>

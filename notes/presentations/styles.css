@@ -1,0 +1,56 @@
+.katex { font-size: 1.1em !important; }
+
+/* html {
+  font-family: 'Courier New', Courier, monospace, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+} */
+
+/* .reveal p {
+  text-align: center !important;
+} */
+
+.reveal {
+  font-family: Gill Sans; 
+  /* font-family: Franklin Gothic Medium; */
+}
+
+.center_align {
+	text-align: center !important;
+}
+
+.remove_margin_p > p {
+	margin: 0 !important;
+}
+
+.left_align {
+	text-align: left !important;
+}
+
+.no_bullet {
+  list-style-type: none !important;
+}
+
+section h2 {
+  font-size: 1.6em !important;
+  text-align: center;
+}
+
+aside {
+  margin-top: 3em !important;
+	bottom: 10px !important;
+  text-align: center !important;
+}
+
+h1 .title {
+  font-size: 2.0em;
+}
+
+.quarto-layout-panel {
+  margin-bottom: 0 !important;
+}
+.quarto-figure {
+  margin-bottom: 0 !important;
+}
+
+/* .aside-footnotes {
+  text-align: justify !important;
+} */

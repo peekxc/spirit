@@ -1,0 +1,4 @@
+## Application \#3: Topology-guided sparsification 
+
+![](images/elephant_sparsify.png){fig-align="left" style="max-width: 1150px !important; max-height: 1150px !important;"}
+

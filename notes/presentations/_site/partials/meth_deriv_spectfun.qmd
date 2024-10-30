@@ -1,0 +1,69 @@
+## Spectral functions
+
+For any smoothed Dirac measure^[Any $\hat{\delta}$ of the form $\nu(1/\tau) p (z \cdot \nu (1/\tau))$ where $p$ is a density function and $\nu$ positive and increasing is sufficient.] $\hat{\delta}$ and _operator monotone_ $\phi: \mathbb{R}_+ \times \mathbb{R}_{++} \to \mathbb{R}_+$, @bi2013approximation show that:
+
+<div style="list-style-type: none !important;">
+<div class="columns">
+<div class="column" style="width: 30%">
+
+[($\tau$-approximate) $\vphantom{\hat{\delta}}$]{.fragment .fade-in fragment-index=1 .no_bullet}
+
+[(Monotone) $\vphantom{\lVert \phi_{\tau}(X) \rVert_\ast}$]{.fragment .fade-in fragment-index=2}
+
+[(Smooth) $\vphantom{\mathbb{R}_1^{n \times m^{\ast^{\ast}}}}$]{.fragment .fade-in fragment-index=3}
+
+[(Explicit) $\vphantom{\partial \lVert \Phi_\tau(\cdot) \rVert_\ast}$]{.fragment .fade-in fragment-index=4}
+
+</div>
+<div class="column" width="70%" layout-align="right">
+
+[$0 \leq \mathrm{rank}(X) - \lVert \Phi_\tau(X) \rVert_\ast \leq c(\hat{\delta})$]{.fragment .fade-in fragment-index=1}
+
+[$\lVert \Phi_{\tau}(X) \rVert_\ast \geq \lVert \Phi_{\tau'}(X) \rVert_\ast$ for any $\tau \leq \tau'$]{.fragment .fade-in fragment-index=2}
+
+[Semismooth^[Here _semismooth_ refers to the existence of directional derivatives] on $\mathbb{R}^{n \times m}$ $\vphantom{\mathbb{R}_1^{n \times m^{\ast^{\ast}}}}$, differentiable on $\mathbf{S}_+^m$]{.fragment .fade-in fragment-index=3}
+
+[Differential $\partial \lVert \Phi_\tau(\cdot) \rVert_\ast$ has closed-form soln.]{.fragment .fade-in fragment-index=4}
+
+</div>
+</div>
+
+:::{.fragment .fade-in fragment-index=5}
+
+Function/operator pairs ( $\phi_\tau$, $\Phi_\tau$ ) particular specializations of _matrix functions_:
+$$\Phi_\tau(X) = U \phi_\tau(\Lambda) U^T$$
+
+Commonly used in many application areas, e.g. compressed sensing [@li2014new]
+
+:::
+
+</div>
+
+
+## Rank Invariances when $\mathbb{F} = \mathbb{R}$ {visibility="hidden"}
+
+[&emsp;&emsp;&emsp;&emsp;$\hspace{10em} \mathrm{rank}(A) \triangleq \mathrm{dim}(\mathrm{Im}(A))$]{.fragment .fade-in style="text-align: left"}
+
+[$\hspace{10em}  \hphantom{\mathrm{rank}(A)} \equiv \mathrm{rank}(A^T) \quad \quad  \quad \text{(adjoint)}$]{.fragment .fade-in style="text-align: left"}
+
+[$\hspace{10em}  \hphantom{\mathrm{rank}(A)} \equiv \mathrm{rank}(A^T A) \quad \quad \; \text{(inner product)}$]{.fragment .fade-in style="text-align: left"}
+
+[$\hspace{10em}  \hphantom{\mathrm{rank}(A)} \equiv \mathrm{rank}(A A^T) \quad \quad \; \text{(outer product)}$]{.fragment .fade-in style="text-align: left"}
+
+[$\hspace{10em}  \hphantom{\mathrm{rank}(A)} \equiv \mathrm{rank}(S^{-1}AS) \quad \;  \text{(change of basis)}$]{.fragment .fade-in style="text-align: left"}
+
+[$\hspace{10em}  \hphantom{\mathrm{rank}(A)} \equiv \mathrm{rank}(P^T A P) \quad \; \text{(permutation)}$]{.fragment .fade-in style="text-align: left"}
+
+[$\hspace{10em}  \hphantom{\mathrm{rank}(A)} \equiv \dots  \quad \quad \quad \quad  \quad \quad  \! \! \text{(many others)}$]{.fragment .fade-in style="text-align: left"}
+
+<br> 
+
+::: {.fragment .fade-in style="text-align: left"}
+
+<div style="text-align: center; font-size: 35px;" >
+
+__Q: Can we exploit some of these to speed up the computation?__
+
+</div>
+
+:::

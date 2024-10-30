@@ -1,0 +1,122 @@
+## Computation
+
+<hr/> 
+
+<div class="incremental" style="list-style-type: none; align=left;">
+
+:::{.fragment .fade-in-then-semi-out style="text-align: left"}
+
+Typical compute $A = U \Lambda U^T$ bounded by $\Theta(n^3)$ time and $\Theta(n^2)$ space^[Assumes the standard matrix multiplication model for simplicity (i.e.  excludes the Strassen-family)]
+
+:::
+
+::: {.fragment .fade-in-then-semi-out style="text-align: left"}
+
+<u>However</u>, if $v \mapsto Av \approx O(n)$, then $\Lambda$ is obtainable in <span style="color: red;"> $O(n^2)$ time </span> and <span style="color: red;">$O(n)$ space</span>!
+
+:::
+
+::: {.fragment .fade-in-then-semi-out style="text-align: left"}
+
+__Idea__: For some random $v \in \mathbb{R}^n$, expand successive powers of $A$:
+
+$$ 
+\begin{align}
+K_j &= [ v \mid Av \mid A^2 v \mid \dots \mid A^{j-1}v] && \\
+Q_j &= [ q_1, q_2, \dots, q_j] \gets \mathrm{qr}(K_j) && \\
+T_j &= Q_j^T A Q_j &&
+\end{align}
+$$
+
+:::
+
+::: {.fragment .fade-in-then-semi-out style="text-align: left"}
+
+Every symmetric $A$ expanded this way admits a _three-term recurrence_ 
+
+$$ A q_j = \beta_{j-1} q_{j-1} + \alpha_j q_j + \beta_j q_{j+1} $$
+
+:::
+
+::: {.fragment .fade-in-then-semi-out style="text-align: left"}
+
+<div style="text-align: center; font-size: 34px;"> 
+
+This is the renowned *__Lanczos method__* for Krylov subspace expansion
+
+</div>
+
+<!-- <img src="images/lanczos_top_10.png" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -65%); height: 65vh !important; width: 95%;"> </img> -->
+
+
+:::
+
+</div>
+
+## Lanczos iteration
+
+![](animations/lanczos_krylov.gif){width=75% height=100% fig-align="center"}
+
+<div style="padding-left: 1em; border: 1px solid black; margin: 0em; ">
+__Theorem [@simon1984analysis]__: Given a symmetric rank-$r$ matrix $A \in \mathbb{R}^{n \times n}$ whose matrix-vector operator $A \mapsto A x$ requires $O(\eta)$ time and $O(\nu)$ space, the Lanczos iteration computes $\Lambda(A) = \{ \lambda_1, \lambda_2, \dots, \lambda_r \}$ in $O(\max\{\eta, n\}\cdot r)$ time and $O(\max\{\nu, n\})$ space _when executed in exact arithmetic_. 
+</div>
+
+
+## Computation {visibility="hidden"}
+
+:::{.incremental}
+
+- Permutation invariance $\implies$ can optimize memory access of $\mathtt{SpMat}$ operation
+- Any complex data structure suffices, e.g. tries$^2$, combinadics, etc...
+- Iterative Krylov methods / Lanczos dominate solving sparse systems$^2$
+- Many laplacian preconditioning methods known [@jambulapati2021ultrasparse]
+- Nearly optimal algorithms known for SDD [@stathopoulos2007nearly] 
+
+:::
+
+:::{.aside}
+
+See [@komzsik2003lanczos, @parlett1995we] for an overview of the Lanczos. See [@boissonnat2014simplex] for representing complexes.
+
+:::
+
+## Permutation Invariance {visibility="hidden"}
+
+Consider the setting where $f_\alpha : \mathbb{R} \to \mathbb{R}^N$ is an $\alpha$-parameterized filter function: 
+
+$$ \mu_p^R(\, f_\alpha \, ) = \{ \mu_p^R(K_\bullet^\alpha) : \alpha \in \mathbb{R} \}$$
+
+Difficult to compute $R_\alpha = \partial_\alpha V_\alpha$ for all $\alpha$ as $K_\bullet = (K, f_\alpha)$ is changing constantly...
+$$ \mathrm{rank}(\partial_p(K_\bullet)) \equiv \mathrm{rank}(P^T \partial_p(K) P) $$
+$$ \mathrm{rank}(\partial_p(K_\bullet)) \equiv \mathrm{rank}(W \mathrm{sgn}(\partial_p(K)) W) $$
+
+Thus we may decouple $f_\alpha$ and $K$ in the computation: 
+
+$$
+\begin{align*}
+ \mu_p^{R}(K,f_\alpha) &\triangleq \mathrm{rank}\big(\,\hat{\partial}_{q}^{j + \delta, k}\,\big) - \; \dots \; + \mathrm{rank}\big(\, \hat{\partial}_{q}^{i + \delta, l}\,\big)  \\
+&\equiv \mathrm{rank}\big(\,V_p^j \circ \partial_{q} \circ W_q^k \,\big) - \; \dots \; + \mathrm{rank}\big(\,V_p^{i+\delta} \circ \partial_{q} \circ W_q^l \,\big)
+ \end{align*}
+ $$
+
+where the entries of $V$, $W$ change continuously w/ $\alpha$, while $\partial_q$ remains _fixed_...
+
+## Spectral functions {visibility="hidden"}
+
+Nuclear norm $\lVert X \rVert_\ast = \lVert \mathbf{\sigma} \rVert_1$ often used in sparse minimization problems like _compressive sensing_ due to its convexity in the unit-ball $\{A \in \mathbb{R}^{n \times m} : \lVert A \rVert_2 \leq 1 \}$
+
+:::{layout="[[50,50]]" layout-valign="bottom"}
+
+![](images/l0_l1.png){width=300 height=100% fig-align="right"}
+
+![](images/convex_envelope.png){width=320 height=100% fig-align="left"}
+
+:::
+
+<div style="text-align: center;"> 
+
+__Left:__ The $\ell_0$ and $\ell_1$ norms on the interval $[-1,1]$
+
+__Right:__ $g$ forms the convex envelope of $f$ in the interval $[a,b]$
+
+</div> 

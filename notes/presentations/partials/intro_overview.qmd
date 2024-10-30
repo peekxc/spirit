@@ -1,0 +1,14 @@
+## Spectral Rank Invariants {visibility="visible"}
+
+:::{style="text-align: center"}
+
+We study _spectral-relaxations_ of <span style="color:orange"> persistent rank invariants </span>  $\beta_p^{\ast}$ and $\mu_p^\ast$ that:
+
+1. Smoothly interpolates _persistent rank function_ $\leftrightarrow$ _Laplacian norms_
+2. "Matrix-free" computation in $\approx O(n)$ memory 
+3. Admit fast $(1 \pm \epsilon)$ approximation for any $\epsilon > 0$
+4. Variety of applications, e.g. featurization, optimization, metric learning
+
+![](images/overview_blackbox.png){width=90% fig-align="center"}
+
+:::

@@ -1,0 +1,28 @@
+## Computing $\mathrm{dgm}$'s _via ranks_
+
+
+:::{.fragment}
+
+<!-- <div style="padding-left: 1em; border: 1px solid black; margin: 0em; ">
+__Theorem__: For a simplicial complex $K$ of size $n = \lvert K_p \rvert, m = \lvert K_{p+1} \rvert$, computing the $\Gamma$-persistent $H_p$ pairs requires $O(C_{(1-\delta)\Gamma}O(n^2) \log n)$ time and $O(\max{m,n})$ space. 
+</div> -->
+
+<div style="padding-left: 0.5em; border: 1px solid black; margin: 0em; font-size: 22px;line-height: 0.8em;">
+__Theorem__ (@chen2011output): For an arbitrary constant $\delta \in (0,1)$ and filtered simplicial complex $K$ of size $n = \lvert K\rvert$, computing the homology classes of persistence at least $\Gamma$ has time and space complexities: 
+$$ O\left( \left(\frac{1}{\delta} + C_{(1 - \delta)\Gamma} \log n\right) R_d(n)\right) \text{ time}, \quad\quad O(dn + R_d(n)) \text{ space}$$
+where $R_d(n)$ is the complexity of computing the rank of an $n \times n$ matrix with $O(dn)$ nonzero entries. 
+</div>
+
+:::
+
+:::{.fragment}
+
+:::{layout="[[50,50]]" layout-valign="bottom"}
+
+![](images/divide_conquer_dgm.png){width=400 height=100% fig-align="right"}
+
+![](images/bisection_tree.png){width=400 height=100% fig-align="left"}
+
+:::
+
+:::

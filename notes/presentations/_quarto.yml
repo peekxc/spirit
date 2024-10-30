@@ -1,0 +1,31 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - aatrn.qmd
+  preview:
+    port: 8085
+    browser: false
+
+format:
+  revealjs:
+    smaller: true
+    theme: simple
+    slide-number: true
+    show-slide-number: print
+    default-timing: 60
+    css:
+      - katex.min.css
+      - styles.css
+    html-math-method:
+      method: katex
+      url: "/"
+    spotlight:
+      useAsPointer: false
+      size: 55
+      toggleSpotlightOnMouseDown: false
+      spotlightOnKeyPressAndHold: 16 # shift :
+      presentingCursor: "default"
+    revealjs-plugins:
+      - spotlight
+  # pdf: default

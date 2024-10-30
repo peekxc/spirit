@@ -1,0 +1,71 @@
+## This Talk - Spectral Rank Invariants {visibility="visible"}
+
+:::{style="text-align: center"}
+
+We introduce a _spectral-relaxation_ of the <span style="color:orange">  persistent rank invariants </span>  $\beta_p^{\ast}$ and $\mu_p^\ast$ that:
+
+1. Smoothly interpolates _persistent rank function_ $\leftrightarrow$ _Laplacian norms_
+2. Admits $(1 \pm \epsilon)$ approximation for any $\epsilon > 0$ in $\approx O(n^2)$ time 
+3. "Matrix-free" computation in $\approx O(n)$ memory 
+4. Variety of applications, e.g. featurization, optimization, metric learning
+
+![](images/overview_blackbox.png){width=90% fig-align="center"}
+
+:::
+
+## The Rank Invariant {visibility="visible" style="text-align: center;"}
+
+:::{.fragment style="text-align: center;"}
+
+Duality between diagrams $\leftrightarrow$ rank function:
+
+$$ \mathrm{dgm}_p(\, K_\bullet, \, f \, ) \triangleq \{ \, ( \, i, j \,) \in \Delta_+ :  \mu_p^{i,j} \neq 0 \, \} \; \cup \; \Delta $$
+
+$$\textstyle \mu_p^{i,j} = \left(\beta_p^{i,j{\small -}1} - \beta_p^{i,j} \right) - \left(\beta_p^{i{\small -}1,j{\small -}1} - \beta_p^{i{\small -}1,j} \right), \quad \beta_p^{k,l} = \sum\limits_{i \leq k} \sum\limits_{j > l} \mu_p^{i,j}$$
+
+
+:::
+
+:::{.fragment style="text-align: center;"}
+
+"Fundamental Lemma of Persistent Homology": diagrams characterize their ranks
+
+:::
+
+:::{.incremental style="margin-left: 2em;"}
+
+- _Persistence measures_ [@chazal2016structure] extend (1,2) naturally when $\mathbb{F} = \mathbb{R}$ 
+- Stability in context of multidimensional persistence [@cerri2013betti] 
+- Generalized via Möbius inversion [@mccleary2022edit], zigzag persistence[@dey2021computing]
+
+:::
+
+
+<!-- Rank invariant 1 -->
+## The Rank Invariant {style="text-align: center;"}
+
+> "...whenever a persistence diagram is sought, it is enough to construct the corresponding persistence measure" [@chazal2016structure]
+
+:::{.fragment .fade-in}
+
+![](images/size_function_dgm.svg){width=100%, fig-align="center"}
+
+:::
+
+## The Rank Invariant {style="text-align: center;"}
+
+> "...whenever a persistence diagram is sought, it is enough to construct the corresponding persistence measure" [@chazal2016structure]
+
+:::{.fragment .fade-in}
+
+![](images/spectral_interpolation_3.png){width=975 height=100% fig-align="center" style="margin: 0; padding: 0;"}
+
+__Goal:__ "Relax" this integer-valued function via _spectral_ characterization of rank
+
+$$ 
+\begin{equation*}
+\beta_p^{a,b} = \mathrm{rank}(H_p(K_a) \to H_p(K_b)) \quad \Leftrightarrow \quad \mathrm{rank}(X) = \sum_{i=1}^n \, \mathrm{sgn}_+(\sigma_i)
+\end{equation*} 
+$$
+
+:::

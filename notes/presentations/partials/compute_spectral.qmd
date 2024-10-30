@@ -1,0 +1,45 @@
+## The Computation
+
+:::{.fragment .fade-in-then-semi-out style="text-align: left"}
+
+Eigen decomp. $A = U \Lambda U^T$ bounded by $\Theta(n^3)$ time and $\Theta(n^2)$ space^[Assumes the standard matrix multiplication model for simplicity (i.e.  excludes the Strassen-family)]
+
+:::
+
+::: {.fragment .fade-in-then-semi-out style="text-align: left"}
+
+<u>However</u>, if $v \mapsto Av \approx O(n)$, then $\Lambda$ is obtainable in <span style="color: red;"> $O(n^2)$ time </span> and <span style="color: red;">$O(n)$ space</span>!
+
+:::
+
+:::: {.columns .fragment}
+
+::: {.column width="50%"}
+
+__Algorithm__: For some random $v \in \mathbb{R}^n$, do:
+
+$$ 
+\begin{align*}
+K_j &= [ v \mid Av \mid A^2 v \mid \dots \mid A^{j-1}v] && \\
+Q_j &= [ q_1, q_2, \dots, q_j] \gets \mathrm{qr}(K_j) && \\
+T_j &= Q_j^T A Q_j &&
+\end{align*}
+$$
+
+:::
+
+::: {.column width="50%"}
+
+![](animations/lanczos_krylov.gif){width=100% fig-align="center"}
+
+:::
+
+::::
+
+:::{.fragment}
+
+<div style="padding-left: 1em; border: 1px solid black; margin: 0em; ">
+__Theorem [@simon1984analysis]__: Given a symmetric rank-$r$ matrix $A \in \mathbb{R}^{n \times n}$ whose matrix-vector operator $A \mapsto A x$ requires $O(\eta)$ time and $O(\nu)$ space, the Lanczos iteration computes $\Lambda(A) = \{ \lambda_1, \lambda_2, \dots, \lambda_r \}$ in $O(\max\{\eta, n\}\cdot r)$ time and $O(\max\{\nu, n\})$ space _when executed in exact arithmetic_. 
+</div>
+
+:::

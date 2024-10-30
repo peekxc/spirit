@@ -1,0 +1,89 @@
+## Interpretation: Regularization{style="text-align: center;"}
+
+::: {.fragment fragment-index=1}
+
+Ill-posed linear systems $Ax = b$ are often solved by "regularized" least-squares: 
+
+$$
+x_\tau^\ast = \argmin\limits_{x \in \mathbb{R}^n} \lVert Ax - b\rVert^2 + \tau \lVert x \rVert_1 
+$$
+
+:::
+
+::: {.fragment fragment-index=2}
+
+The minimizer is given in closed-form by the regularized pseudo-inverse:
+
+$$
+x_\tau^\ast = (A^T A + \tau I)^{-1} A^T b
+$$
+:::
+
+::: {.fragment fragment-index=3}
+
+![](images/lasso.png){width=50% fig-align="center"}
+
+:::
+
+::: aside
+
+Image from: https://thaddeus-segura.com/lasso-ridge/
+
+::: 
+
+## Interpretation: Regularization
+
+<br/>
+
+::: {.fragment fragment-index=1}
+
+Under the appropriate parameters$^1$ for $\nu$ and $p$, $\phi$ takes the form:
+
+<!-- $$
+\phi(x, \tau) = \frac{2}{\tau}\int\limits_{0}^z z \cdot  \big((z/\sqrt{\tau})^2+1\big)^{-2} dz = \frac{x^2}{x^2 + \tau}
+$$ -->
+
+$$
+\phi(x, \tau) = \frac{x^2}{x^2 + \tau}
+$$
+
+:::
+
+
+::: {.fragment fragment-index=2}
+
+[The corresponding Löwner operator and its Schatten $1$-norm is given$^2$ by:]{style="text-align: center;"}
+
+$$
+\Phi_\tau(X) = (X^T X + \tau \, I_n)^{-1} X^T X, \quad \quad \lVert \Phi_\tau(X) \rVert_\ast = \sum\limits_{i = 1}^n \frac{\sigma_i(X)^2}{\sigma_i(X)^2 + \tau}
+$$
+
+:::
+
+::: {.fragment fragment-index=3}
+
+<div style="text-align: center;">
+
+This the <span style="color: purple;"> _Tikhonov regularization_ </span> in standard form used in $\ell_1$-regression (LASSO)
+
+</div>
+
+:::
+
+::: {.fragment fragment-index=4}
+
+<div style="text-align: center;">
+
+$\Leftrightarrow$ $\tilde{\beta}_p$ is a "Tikhonov-regularized Betti number"
+
+</div>
+
+:::
+
+:::{.aside}
+
+\(1\) This $\phi$ corresponds to setting $\nu(\tau) = \sqrt{\tau}$ and $p(x) = 2x (x^2 + 1)^{-2}$; \(2\) See Theorem 2 in @zhao2012approximation.
+
+:::
+
+

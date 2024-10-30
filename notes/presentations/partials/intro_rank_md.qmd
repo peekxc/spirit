@@ -1,0 +1,63 @@
+<!-- ## The Rank Invariant {visibility="hidden" style="text-align: center;"}
+
+:::{.fragment style="text-align: center;"}
+
+Duality between diagrams $\leftrightarrow$ rank function:
+
+$$ \mathrm{dgm}_p(\, K_\bullet, \, f \, ) \triangleq \{ \, ( \, i, j \,) \in \Delta_+ :  \mu_p^{i,j} \neq 0 \, \} \; \cup \; \Delta $$
+
+$$\textstyle \mu_p^{i,j} = \left(\beta_p^{i,j{\small -}1} - \beta_p^{i,j} \right) - \left(\beta_p^{i{\small -}1,j{\small -}1} - \beta_p^{i{\small -}1,j} \right), \quad \beta_p^{k,l} = \sum\limits_{i \leq k} \sum\limits_{j > l} \mu_p^{i,j}$$
+
+
+:::
+
+:::{.fragment style="text-align: center;"}
+
+"Fundamental Lemma of Persistent Homology" $\leftrightarrow$ diagrams characterize their ranks
+
+::: -->
+
+
+## The Rank Invariant {visibility="hidden"}
+
+:::{.incremental style="margin-left: 2em;"}
+
+- _Persistence measures_ [@chazal2016structure] extend (1,2) naturally when $\mathbb{F} = \mathbb{R}$ 
+- Stability in context of multidimensional persistence [@cerri2013betti] 
+- Generalized via Möbius inversion [@mccleary2022edit], zigzag persistence[@dey2021computing]
+
+:::
+
+## The Rank Invariant {style="text-align: center;"}
+
+Duality between diagrams $\leftrightarrow$ rank function:
+
+$$ \mathrm{dgm}_p(\, K_\bullet, \, f \, ) \triangleq \{ \, ( \, i, j \,) \in \Delta_+ :  \mu_p^{i,j} \neq 0 \, \} \; \cup \; \Delta $$
+
+$$\textstyle \mu_p^{i,j} = \left(\beta_p^{i,j{\small -}1} - \beta_p^{i,j} \right) - \left(\beta_p^{i{\small -}1,j{\small -}1} - \beta_p^{i{\small -}1,j} \right), \quad \beta_p^{k,l} = \sum\limits_{i \leq k} \sum\limits_{j > l} \mu_p^{i,j}$$
+
+"Fundamental Lemma of Persistent Homology" $\leftrightarrow$ diagrams characterize their ranks
+
+![](images/betti_dual.png){width=70% fig-align="center"}
+
+
+<!-- Rank invariant 1 -->
+## The Rank Invariant {style="text-align: center;"}
+
+> "...whenever a persistence diagram is sought, it is enough to construct the corresponding persistence measure" [@chazal2016structure]
+
+![](images/size_function_dgm.svg){width=80% fig-align="center"}
+<!-- ![](images/size_func_forward.png){width=90% fig-align="center"}  -->
+
+Problem: rank is still a discontinuous function!
+
+
+<!-- ## The Rank Invariant {style="text-align: center;"}
+
+> "...whenever a persistence diagram is sought, it is enough to construct the corresponding persistence measure" [@chazal2016structure]
+
+![](images/size_func_backward.png){width=90% fig-align="center"} 
+
+
+No "algorithmic" way of constructing persistence measure w/o diagrams 
+-->

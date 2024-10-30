@@ -1,0 +1,39 @@
+## Beyond $\mathrm{dgm}$'s: Revisiting the rank computation
+ 
+::: {.left_align}
+
+$$ \beta_p^{i,j} : \mathrm{rank}(H_p(K_i) \to H_p(K_j))$$
+	
+:::{.incremental style="list-style-type: none;align=center;"}
+
+[$\;\quad\quad\quad\beta_p^{i,j} = \mathrm{dim} \big( \;\mathrm{Ker}(\partial_p(K_i))\; / \;\mathrm{Im}(\partial_{p+1}(K_j)) \; \big )$]{.fragment .fade-in-then-semi-out style="text-align: left"}
+
+[$\;\quad\quad\quad\hphantom{\beta_p^{i,j} }= \mathrm{dim}\big(\; \mathrm{Ker}(\partial_p(K_i)) \; / \; (\mathrm{Ker}(\partial_p(K_i)) \cap \mathrm{Im}(\partial_{p+1}(K_j))) \; \big )$]{.fragment .fade-in-then-semi-out style="text-align: left"}
+
+[$\;\quad\quad\quad\hphantom{\beta_p^{i,j}}=\color{blue}{\mathrm{dim}\big(\;\mathrm{Ker}(\partial_p(K_i)) \; \big)} \; \color{black}{-} \; \color{red}{\mathrm{dim}\big( \; \mathrm{Ker}(\partial_p(K_i)) \cap \mathrm{Im}(\partial_{p+1}(K_j))\;\; \big)}$]{.fragment .fade-in-then-semi-out style="text-align: left"}
+
+::: 
+
+::: {.fragment .fade-in-then-semi-out style="text-align: center;"}
+Rank-nullity yields the <span style="color: blue">left term</span>: 
+$$
+\mathrm{dim}\big(\mathrm{Ker}(\partial_p(K_i))\big) = \lvert C_p(K_i) \rvert - \mathrm{dim}(\mathrm{Im}(\partial_p(K_i)))
+$$
+:::
+
+:::{.fragment .fade-in-then-semi-out .center_align}
+"Relaxing" the <span style="color: red">right term</span> poses some difficulties:
+
+:::{style="list-style-type: none; align=center; text-align: center; margin-left: 2.5em; margin: 0; padding: 0;"}
+- Pseudo-inverse$^1$, projectors$^2$, Neumann's inequality$^3$, etc.
+- PID algorithm$^4$, Reduction algorithm$^5$, Persistent Laplacian$^6$
+:::
+
+:::
+
+:::
+
+:::{.aside}
+@anderson1969series, @ben1967geometry, @ben2015projectors, @zomorodian2004computing, @edelsbrunner2000topological, @memoli2022persistent
+:::
+

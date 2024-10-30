@@ -1,0 +1,87 @@
+## The Rank Invariant {style="text-align: center;"}
+
+__Idea:__ "Relax" this integer-valued function via _spectral_ characterization of rank
+
+$$ 
+\begin{equation*}
+\beta_p^{a,b} = \mathrm{rank}(H_p(K_a) \to H_p(K_b)) \quad \Leftrightarrow \quad \mathrm{rank}(X) = \sum_{i=1}^n \, \mathrm{sgn}_+(\sigma_i)
+\end{equation*} 
+$$
+
+
+:::{.fragment .fade-in}
+
+![](images/spectral_interpolation_3.png){width=975 height=100% fig-align="center" style="margin: 0; padding: 0;"}
+
+:::
+
+## Relaxing the rank function
+
+<hr/> 
+
+<!-- :::{.fragment .fade-in-then-semi-out fragment-index=1 style="text-align: center"} 
+
+__Relaxation__: &nbsp;&nbsp; Approximate $\mathrm{rank}$ by approximating the _sign_ function 
+
+::: -->
+
+
+:::{style="list-style-type: none; align=center;"}
+
+::: {.fragment .fade-in-then-semi-out fragment-index=1 style="text-align: center"}
+
+$$\mathrm{rank}(\partial) = \mathrm{rank}(\underbrace{\partial \partial^T}_{\mathcal{L}}) = \sum_{i=1}^n \, \mathrm{sgn}_+(\lambda_i) \approx \sum_{i=1}^n \, \phi(\lambda_i, \tau) $$
+
+$$\text{ where } \phi(x, \tau) \triangleq \int\limits_{-\infty}^x\hat{\delta}(z, \tau) dz \text{ for a smoothed Dirac measure } \hat{\delta}^1$$
+
+<!-- \hat{\delta}(x, \tau) = \frac{1}{\nu(\tau)} p\left(\frac{x}{\nu(\tau)}\right), \quad \tau > 0, \quad \nu \text{ inc. } -->
+:::
+
+
+::: {.fragment .fade-in-then-semi-out fragment-index=2 style="text-align: center"}
+
+$\phi : \mathbb{R} \to \mathbb{R}$ induces a unique$^2$ _spectral function_ $F: S_{n} \to \mathbb{R}$ via its _trace_: 
+
+$$ 
+\begin{align}
+\Phi_\tau(\mathcal{L}) &\triangleq U \phi_\tau(\Lambda) U^T \\
+\lVert \Phi_\tau(\mathcal{L}) \rVert_\ast &= \sum\limits_{i=1}^n \phi(\lambda_i, \tau) = \sum\limits_{i=1}^n e_i^T \Phi_\tau(\mathcal{L}) e_i
+\end{align}
+$$ 
+
+<!-- $$ \mathrm{tr}(\Phi_\tau(\mathcal{L})) = \sum\limits_{i=1}^n \phi(\lambda_i, \tau) $$ -->
+
+:::
+
+
+<!-- ::: {.fragment .fade-in-then-semi-out fragment-index=4 style="text-align: center"}
+
+The operator $\Phi_\tau(X) \in \mathbb{R}^{n \times n}$ is called a _Löwner operator_ [@bhatia2013matrix]
+
+::: -->
+
+
+<!-- ::: {.fragment .fade-in-then-semi-out fragment-index=4 style="text-align: center"}
+
+$\Phi_\tau(X)$ is a _Löwner operator_ when $\phi$ is _operator monotone_ [@jiang2018unified]
+
+$$ A \succeq B \implies \phi_\tau(A) \succeq \phi_\tau(B) $$
+
+:::
+
+:::{.fragment style="text-align: center"}
+
+Closed-form proximal operators exist when $\phi_\tau$ convex + minor conditions$^1$ 
+
+::: -->
+
+:::
+
+<aside class="aside" style="text-align: center !important;">
+
+\(1\) Any $\hat{\delta}$ of the form $\nu(1/\tau) p (z \cdot \nu (1/\tau))$ where $p$ is a density function and $\nu$ positive and increasing is sufficient.
+
+\(2\) See Theorem 1.2 of @jiang2018unified for uniqueness conditions.
+<!-- \(1\) See @beck2017first and @bauschke2011convex for existence and optimality conditions.  -->
+
+</aside>

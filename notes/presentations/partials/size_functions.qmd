@@ -1,0 +1,280 @@
+##  
+
+![](images/func_plain.svg){width="80%" height="50%" fig-align="center"}
+
+## 
+
+![](images/func_deriv.svg){width="80%" fig-align="center"}
+
+$$f'(x) \triangleq \left(\frac{f(x + dx) - f(x)}{dx}\right)$$
+
+## 
+
+![](images/func_crit_deriv.svg){width="80%" fig-align="center"}
+
+$$ f'(x) = 0 \; \Leftrightarrow \; \mathrm{Crit}(f)$$
+
+## 
+
+![](images/func_crit_deriv2.svg){width="100%" fig-align="center"}
+
+$$ f''(x) = 0 \; \Leftrightarrow \; \mathrm{Inflection}(f)$$
+
+## 
+
+![](images/p_di_simple.svg){width="100%" fig-align="center"}
+
+$$ F' = f $$
+
+## {visibility="hidden"}
+
+![](images/p_di.svg){width="100%" fig-align="center"}
+
+$$\int\limits_{-\infty}^b f(x) dx = F(b) $$
+
+## 
+
+![](images/p_di_ab.svg){width="100%" fig-align="center"}
+
+$$\int\limits_{a}^b f(x) dx = F(b) - F(a) $$
+
+:::{.fragment style="text-align: center;"}
+
+"Inclusion-exclusion" principle
+
+:::
+
+## 
+
+![](images/p_h.svg){width="100%" fig-align="center"}
+
+$F: [0,1] \to \mathbb{R}$ induces an function $H: \Delta_+ \to \mathbb{R}$
+$$ 
+\begin{align*}
+H: \quad & \Delta_+ &\to &\;\mathbb{R} \\
+   &(a,b) &\mapsto &\; F(b) - F(a)
+\end{align*}
+$$
+
+where $\Delta_+ \triangleq \{ (a,b) \in \mathbb{R}^2 : a \leq b\}$ denotes the _upper-left half plane_
+
+## 
+
+$F: [0,1] \to \mathbb{R}$ induces an function $H: \Delta_+ \to \mathbb{R}$ given by $H(a,b) = F(b) - F(a)$
+
+<br/>
+
+![](images/fs_h.svg){width="100%" fig-align="center"}
+
+## This talk: a *new* summary of functions
+
+![](images/summary.png){width="100%" height="90%" fig-align="center"}
+
+## Size Functions 
+
+![](images/p_abs.svg){width="100%" fig-align="center"}
+
+<!-- The _size function_ $S_f: \Delta_+ \to \mathbb{N}$ of $f$ count -->
+<!-- $$
+\begin{align}
+S_f: \Delta_+ & \to \mathbb{N} \\
+(a,b) \mapsto 
+\end{align}
+$$ -->
+> "The _size function_ $S_f: \Delta_+ \to \mathbb{N}$ of $f$ counts the number of connected components of $\{x: f(x) \leq a \}$ containing at least one point of $\{x: f(x) \leq b \}$"
+
+## Size Functions
+
+![](images/size_function.svg){width="500px" fig-align="center"}
+
+
+<!-- :::{.aside}
+Frosini, Patrizio, and Claudia Landi. "Size theory as a topological tool for computer vision." Pattern Recognition and Image Analysis 9.4 (1999): 596-603.
+::: -->
+
+## Representation theorem 
+
+<!-- $$\text{Define } \beta^{a,b} \triangleq S_f(a,b), \quad \text{ where } S_f: \Delta_+ \to \mathbb{N}$$ -->
+:::{.fragment}
+
+A _corner point_ is defined via the following inclusion-exclusion formula: 
+
+$$
+{\small 
+\mu^{a,b} \triangleq \min_{\delta > 0} \!\Big[S_f(a \!+\! \delta, b  \!-\! \delta) \!-\! S_f(a \!+\! \delta, b \!+\! \delta)\Big] \!-\! \Big[S_f(a \!-\! \delta, b - \delta) \!-\! S_f(a \!-\! \delta, b \!+\! \delta)\Big]
+}
+$$
+
+:::
+
+:::{.fragment}
+
+![](images/size_function_dgm.svg){width=65%, fig-align="center"}
+
+The collection of all non-zero corner-points $\mu^\ast \neq 0$ is called the _persistence diagram_ of $f$:
+
+$$ \mathrm{dgm}(f) \triangleq \{ \, (a, b) :  \mu^{a,b} \neq 0  \, \}, \quad S_f(\hat{a},\hat{b}) = \sum\limits_{a \leq \hat{a}\vphantom{\hat{b}}}\sum\limits_{b > \hat{b}} \mu^{a,b} $$
+
+:::
+
+
+## Diagram properties 
+
+<!-- Many properties of persistence diagrams are quite nice, including: -->
+
+:::{.fragment .fade-in-then-semi-out}
+
+(1) _Succinct:_ has at most $O(K)$ points, where $K = \lvert \mathrm{Crit}(f)\rvert$ 
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+(2) _Unique pairing_: given $f$, pairing of critical points is unique
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+(3) _Stable_: Distance between diagrams bounded above by _bottleneck distance_ $d_B$ 
+
+$$ d_B(\mathrm{dgm}(f), \mathrm{dgm}(g)) \leq \lVert f - g \rVert_\infty $$
+
+![](animations/stability-cropped.gif){width=50% height=100% fig-align="center"}
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+(4) _Existence_: The most surprising property---it _exists_! 
+
+:::
+
+## Filtrations: Going beyond functions
+
+:::{.fragment .fade-in-then-semi-out}
+
+A _filtration_ is a pair $(K, f)$ where $f : K \to I$ satisfies $f(\tau) \leq f(\sigma)$ for all $\tau \subseteq \sigma \in K$
+
+$$ \emptyset = K_0 \subseteq K_1 \subseteq K_2 \subseteq \dots \subseteq K_N = K $$
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+Every pair $(a,b) \in I \times I$ sat. $a \leq b$ has inclusion maps $K_a \hookrightarrow K_b$ induces maps: 
+$$  0 = H_p(K_0) \to  H_p(K_1) \to \dots \to H_p(K_N) = H_p(K)$$
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+Sequence called a _persistence module_---images of $h_p^{a,b} : H_p(K_a) \to H_p(K_b)$ are PH groups:
+$$
+\begin{equation*}
+	H_{p}^{a,b} = \begin{cases}
+	H_p(K_a) & a = b \\ 
+ 	\mathrm{Im}\,h_p^{a,b} & a < b
+ \end{cases}
+, \quad \quad 
+\beta_p^{a,b} = \begin{cases}
+ 	\beta_p(K_a) & a = b \\
+ 	\mathrm{dim}(H_{p}^{a,b}) & a < b
+ \end{cases}
+\end{equation*}
+$$
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+When defined over a field $\mathbb{F}$, this sequence of homology groups _uniquely decompose_ $(K,f)$ into a pairing $(\sigma_a, \sigma_b)$ demarcating the evolution of homology classes.
+
+:::
+
+## Topological Inference {visibility="hidden"}
+
+:::{.fragment style="margin-top: 1.5em;"}
+
+Suppose $X \subset \mathcal{X}$ is a point set sampled from some topological space $\mathcal{X} \subset \mathbb{R}^d$ 
+
+:::
+
+:::{.fragment .fade-in-then-semi-out }
+
+<div style="padding-left: 1em; border: 1px solid black; margin: 0.5em; ">
+__Nerve Theorem__: 
+Let $\mathcal{U} = \{U_i\}_{i \in I}$ be a cover of a topological space $\mathcal{X}$ by open sets s.t. the intersection of any subcollection
+of $U_i$'s is either empty or contractible. Then $\mathcal{X}$ and $\mathrm{Nerve}(\mathcal{U})$ are homotopy equivalent.
+</div>
+
+:::
+
+:::{.fragment .fade-in-then-semi-out style="text-align: center;"}
+
+![](images/nerve_pic.svg){width=80% fig-align="center"}
+
+If we take $\mathcal{U} = \{ B(x, \epsilon)\}_{\epsilon > 0}$, we might expect $\mathcal{N}(X)$ to capture the "shape" of $\mathcal{X}$ 
+
+(if both $\epsilon$ and sample density of $X$ large enough!)
+
+<!-- If we take $\mathcal{U} = \{ B(x, \epsilon)\}_{\epsilon > 0}$, then we might expect $\mathrm{Čech}_{\epsilon}(X)$ to capture the "shape" of $\mathcal{X}$, 
+if $X$ is sampled densely enough, as $\mathrm{Čech}_{\epsilon}(X)$ is homotopy equivalent to $\bigcup_{x \in X} B(x, \epsilon)$ -->
+
+:::
+<!-- <div style="padding-left: 1em; border: 1px solid black; margin: 2em; ">
+__Čech Nerve Theorem__: 
+Let $\mathcal{U}$ collection of closed balls in $\mathbb{R}^d$ around ; if then the realization of the nerve of $\mathcal{U}$ 
+is homotopy equivalent to $\bigcup_{V \in \mathcal{U}} V$. 
+</div> -->
+<!-- If $X$ is sampled independently from $\mathcal{X}$, then as $\lvert X \rvert \to \infty$,  -->
+<!-- Let $\beta^{a,b}$ is the rank of the linear map in _homology_ induced by inclusion $f^{-1}(-\infty, a] \hookrightarrow f^{-1}(-\infty, b]$
+
+$$ \beta^{a,b} = \mathrm{rank}(f^{-1}(-\infty, a] \hookrightarrow f^{-1}(-\infty, b])$$ -->
+
+## Topological inference 
+
+:::{.fragment .fade-in-then-semi-out}
+
+Consider filtering a given point set $X \subset \mathcal{X}$ via the _union-of-balls_ filtration:
+
+$$ \emptyset = \mathrm{Čech}_0(X) \subseteq \mathrm{Čech}_\epsilon(X) \subseteq \dots \subseteq \mathrm{Čech}_{\epsilon'}(X), \quad \mathrm{Čech}_\epsilon(X) = \{\, B(x, \epsilon) : x \in X \,\}$$
+
+![](images/union_of_balls.png){width="80%" height="20%" fig-align="center"}
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+<div style="padding-left: 1em; border: 1px solid black; margin: 0em; font-size: 0.9em;">
+__Theorem__: Let $\mathcal{X} \subset \mathbb{R}^d$ be compact, with weak feature size $\mathrm{wfs}(\mathcal{X}) = 4\epsilon > 0$, and let $X \subset \mathbb{R}^d$ be a finite point set with Hausdorff distance $d_H(X, \mathcal{X})\leq \epsilon$ from $\mathcal{X}$. Then: 
+
+$$ \mathrm{rank}(H_p(\mathcal{X})) = \mathrm{rank}(H(d_X^{-1}[0, \epsilon]) \to H(d_X^{-1}[0, 3\epsilon]))$$
+
+$\Longrightarrow$ every homology class in $\mathcal{X}$ exists in sublevel set at $\epsilon$ + persists up to $3\epsilon$ 
+</div>
+
+:::
+
+## A Brief History: PH's greatest hits™
+
+::: {.incremental}
+
+- [1992] Size functions discovered, related to _deformation distance_ between manifolds 
+- [2004] Size functions found to induce _natural pseudodistance_ between closed manifolds 
+- [2005] Homological inference using persistence shown to depend on _weak feature size_
+- [2009] $d_B$ on Rips filtrations yields _stable lower bound_ for Gromov-Hausdorff distance
+- [2013] Family of diagrams from _directional transform_ injective, sparking inverse theory 
+- [2018] Rank invariant discovered to generalize to _multi-parameter setting_
+- [2021] "Quasi-isometry" result relates _space of metric spaces_ to the _space of diagrams_
+- [2022] Connection between _Möbius inversion_ and (graded) rank invariant discovered 
+
+:::
+
+:::{.fragment style="text-align=center; font-size: 1.65em;"}
+
+_Significant enough to merit research in its own right_
+
+(I will study its _computational_ aspects)
+
+:::
