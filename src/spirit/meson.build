@@ -15,7 +15,12 @@ python_sources = [
   '__version__.py', 
   'apparent_pairs.py', 
   'query.py', 
-  'filtration.py'
+  'filtration.py', 
+  'plotting.py', 
+	'optimize.py', 
+	'rank.py', 
+	'shakeandbake.py', 
+	'timeseries.py'
 ]
 
 ## Print install directory
