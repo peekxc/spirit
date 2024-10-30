@@ -1,0 +1,90 @@
+---
+title: Spectral relaxations of the persistent rank invariant
+author: Matt Piekenbrock$\mathrm{}^\dagger$   \&   Jose Perea$\mathrm{}^\ddagger$
+format: 
+  revealjs:
+    institute: 
+      - $\dagger$ Khoury College of Computer Sciences, Northeastern University
+      - $\ddagger$. Department of Mathematics and Khoury College of Computer Sciences, Northeastern University
+    overview: true
+    margin: 0.075
+    css: 
+      - katex.min.css
+      - styles.css
+    html-math-method: 
+      method: katex 
+      url: "/"
+    smaller: true
+    theme: simple 
+    spotlight:
+      useAsPointer: false
+      size: 55
+      toggleSpotlightOnMouseDown: false
+      spotlightOnKeyPressAndHold: 16 # shift : 
+      presentingCursor: "default"
+    title-slide-attributes:
+      data-background-image: images/NE.jpeg
+      data-background-size: contain
+      data-background-opacity: "0.25"
+  html: 
+    embed-resources: true
+resources: ["partials/*.qmd"]
+bibliography: references.bib
+---
+
+<!-- {{< include partials/intro_learning.qmd >}} -->
+
+{{< include partials/intro_overview.qmd >}}
+
+{{< include partials/motive_top_structure.qmd >}}
+
+{{< include partials/motive_red_memory.qmd >}}
+
+{{< include partials/intro_rank_md.qmd >}}
+
+<!-- {{< include partials/meth_deriv_ranknull.qmd >}} -->
+
+<!-- {{< include partials/meth_deriv_technical.qmd >}} -->
+
+{{< include partials/meth_deriv_rank_relax.qmd >}}
+
+{{< include partials/meth_deriv_spectfun.qmd >}}
+
+{{< include partials/interp_regularization.qmd >}}
+
+{{< include partials/app_filtration_opt.qmd >}}
+
+<!-- {{< include partials/compute_chen.qmd >}} -->
+
+<!-- {{< include partials/comb_laplacian.qmd >}} -->
+
+<!-- {{< include partials/app_filtration_opt.qmd >}} -->
+
+<!-- {{< include partials/app_manifold_detect.qmd >}} -->
+
+{{< include partials/compute_spectral.qmd >}}
+
+{{< include partials/compute_tr_est.qmd >}}
+
+{{< include partials/compute_results.qmd >}}
+
+{{< include partials/compute_variance.qmd >}}
+
+<!-- {{< include partials/app_dgms.qmd >}} -->
+
+{{< include partials/acknowledges.qmd >}}
+
+
+## References
+
+::: {#refs style="font-size: 12pt;"}
+:::
+
+<script>
+  window.WebFontConfig = {
+    custom: {
+      families: ['KaTeX_AMS'],
+    },
+  };
+</script>
+

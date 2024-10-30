@@ -1,0 +1,238 @@
+
+
+## Experiment \#2: Intrinsic signatures {visibility="hidden"}
+
+<div style="text-align: center;"> 
+
+__Dataset:__ 3D meshes of animals in different poses [@chazal2009gromov]
+
+</div>
+
+![](images/gh_data_pose.png){width=425 height=100% fig-align="center"}
+
+<div style="text-align: center;"> 
+
+__Challenge:__ Recognize intrinsic shape categories (via a distance metric)
+
+</div>
+
+## Experiment \#2: Intrinsic signatures {visibility="hidden"}
+
+The _Gromov-Hausdorff_ distance yields a metric on the set of compact metric spaces $\mathcal{X}$
+
+$$
+d_{GH}(d_X, d_Y) = \sup_{x \in X, y \in Y} \lvert d_X(x, \psi(y)) - d_Y(y, \phi(x))\rvert 
+$$
+
+![](images/camel_gh.png){width=600 height=100% fig-align="center"}
+
+Using intrinsic metric makes $d_{\mathrm{GH}}$ blind to e.g. shapes represented in different _poses_
+
+:::{.fragment}
+
+<div style="text-align: center;"> 
+
+Unfortunately, the GH distance is NP-hard to compute [@memoli2012some]
+
+</div>
+
+:::
+
+## Experiment \#2: Intrinsic signatures {visibility="hidden"}
+
+<div style="text-align: center;"> 
+
+It's known $d_B$ ($d_W$) on Rips filtrations $\mathcal{R}(X, d_X)$ lower bound GH (GW) distance
+
+</div> 
+
+$$ 
+d_B(\mathrm{dgm}_p(\mathcal{R}(X, d_X)), \mathrm{dgm}_p(\mathcal{R}(Y, d_Y))) \; \leq \; d_{GH}((X, d_X), (Y, d_Y))
+$$
+
+:::{layout-ncol=1}
+
+![](images/camel_gh_rips_comparison.png){width=875 height=100% fig-align="center"}
+
+:::
+
+<div style="text-align: center;"> 
+
+Motivates use of persistence in metric settings for e.g. shape classification!
+
+</div> 
+
+## Experiment \#2: Intrinsic signatures {visibility="hidden"}
+
+<div style="text-align: center;"> 
+
+__Issue:__ Diagrams are far from injective, cannot distinguish e.g. stretched shapes
+
+</div> 
+
+![](images/dgm_noninjective.png){width=575 height=100% fig-align="center"}
+
+<div style="text-align: center;"> 
+
+The lower bound on $d_{\mathrm{GH}}$ could be totally useless!
+
+</div> 
+
+
+## Experiment \#2: Intrinsic signatures {visibility="hidden"}
+
+:::{.fragment}
+Lower bounds extend to Rips filtrations _augmented_ with real-valued functions $f, g$: 
+
+$$
+\mathcal{R}(f) \triangleq \mathcal{R}(X, d_X, f) = \{\mathcal{R}_\alpha(X_\alpha)\}_{\alpha > 0}, \quad X_\alpha \triangleq f^{-1}((-\infty, \alpha)) \subseteq X
+$$
+
+:::
+
+:::{.fragment}
+
+The diagrams from $\mathcal{R}(\lambda \cdot f_X)$ represent _stable signatures_ for each $\lambda > 0$:
+
+$$
+d_B(\mathcal{R}(\lambda \cdot f_X), \mathcal{R}(\lambda \cdot f_Y)) \leq \max(1, \lambda L) \cdot d_{\mathrm{GH}}(X, Y)
+$$
+
+:::
+
+<!-- <div style="text-align: center;">  -->
+
+<!-- </div>  -->
+
+<!-- <hr>  -->
+
+:::{.fragment}
+
+Chazal showed these bounds extend to metrics on _augmented_ metric spaces:
+
+$$
+\mathcal{X}_1 = \{ (X, d_X, f_X) \mid (X, d_X, f_X) \in \mathcal{X}, f_X: X \to \mathbb{R} \text{ continuous }\}
+$$
+
+These signatures also extend to measure metric spaces, see [@chazal2009gromov]
+
+::: 
+
+:::{.fragment}
+
+<br>  
+
+<span style="color: red;"> NOTE:   </span> 
+Size of $L$ depends on the choice of $f$ + each $\lambda$ produces a new signature! 
+
+:::
+
+## Experiment \#2: Intrinsic signatures {visibility="hidden"}
+
+<div style="text-align: center;"> 
+
+__Ex:__ The _eccentricity_ function $e_X^1(x) = \max_{x' \in X} d_X(x,x')$ has $L = 2$ 
+
+</div> 
+
+![](images/dgm_noninjective2.png){width=775 height=100% fig-align="center"}
+
+<div style="text-align: center;"> 
+
+Augmenting via a fraction of $e_X^1$ modifies the diagrams of the ellipsoid significantly
+<!-- , while the ones for the sphere hardly change due to the fact that the eccentricity is constant -->
+
+</div> 
+
+
+## Experiment \#2: Intrinsic signatures {visibility="hidden"}
+
+Lower bounds extend to Rips filtrations _augmented_ with real-valued functions $f, g$: 
+
+$$
+d_B(\mathcal{R}(\lambda \cdot f_X), \mathcal{R}(\lambda \cdot f_Y)) \leq \max(1, \lambda L) \cdot d_{\mathrm{GH}}(X, Y)
+$$
+
+:::{layout-ncol=4}
+
+![](images/camel1_rips.png){width=450 height=100% fig-align="left"}
+
+![](images/camel_dgm_rips.png){width=450 height=100% fig-align="left"}
+
+![](images/camel1_ecc.png){width=450 height=100% fig-align="left"}
+
+![](images/camel_dgm_ecc.png){width=450 height=100% fig-align="left"}
+
+:::
+
+<div style="text-align: center;"> 
+
+Larger values of $\lambda$ yield worse bounds, but can lead to simpler diagrams
+
+</div>
+
+<!-- Extra structure combines stability of persistence with flexibility of metrics -->
+
+
+## Experiment \#2: Intrinsic signatures {visibility="hidden"}
+
+
+<div style="text-align: center;"> 
+
+Each choice of $\lambda > 0$ yields a _stable signature_ via $\mathcal{R}(\lambda \cdot f_X)$
+
+</div> 
+
+<div style="text-align: center;"> 
+
+Which value of $\lambda$ to choose?
+
+</div>
+
+![](images/camel1_interp1.png){width=950 height=100% fig-align="center"}
+
+
+
+## Experiment \#2: Intrinsic signatures {visibility="hidden"}
+
+<div style="text-align: center;"> 
+
+Each choice of $\lambda > 0$ yields a _stable signature_ via $\mathcal{R}(\lambda \cdot f_X)$
+
+</div> 
+
+<div style="text-align: center;"> 
+
+Which value of $\lambda$ to choose?
+
+</div>
+
+![](images/camel1_interp2.png){width=950 height=100% fig-align="center"}
+
+<div style="text-align: center;"> 
+
+We sample from $\Delta_+$ randomly, retaining signatures with sufficient topological activity
+
+</div>
+
+## Experiment \#2: Intrinsic signatures {visibility="hidden"}
+
+...and compared the computed spectral signatures under the relative distance metric: 
+
+<!-- \partial_p^\ast = U \Sigma V^T -->
+$$
+\Lambda(\mu_p^R) = \{\sigma_1, \sigma_2, \dots, \sigma_n \}, \quad \quad \chi(\mathbf{\sigma}, \mathbf{\tilde{\sigma}}) = \sum\limits_{i=1}^n \frac{\lvert \sigma_i - \tilde{\sigma}_i \rvert}{\sqrt{\sigma_i + \tilde{\sigma}_i}}
+$$
+
+![](images/dw_chi_comp.png){width=750 height=100% fig-align="center"}
+
+
+<!-- ## Experiment \#3: Filtration optimization -->
+
+<!-- ![](images/smoothed_mu.png){width=55% height=100%} -->
+
+
+
+
+
+<!-- __Summary:__ We can obtain $\mu_p^R(K, f_\alpha)$ for varying $\alpha$ by using thresholded versions of $f_\alpha$ as scalar-products  -->

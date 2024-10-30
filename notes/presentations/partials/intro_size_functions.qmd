@@ -1,0 +1,392 @@
+##  
+
+![](func_plain.svg){width="80%" height="50%" fig-align="center"}
+
+## 
+
+![](func_deriv.svg){width="80%" fig-align="center"}
+
+$$f'(x) \triangleq \left(\frac{f(x + dx) - f(x)}{dx}\right)$$
+
+## 
+
+![](func_crit_deriv.svg){width="80%" fig-align="center"}
+
+$$ f'(x) = 0 \; \Leftrightarrow \; \mathrm{Crit}(f)$$
+
+## 
+
+![](func_crit_deriv2.svg){width="100%" fig-align="center"}
+
+$$ f''(x) = 0 \; \Leftrightarrow \; \mathrm{Inflection}(f)$$
+
+## 
+
+![](p_di_simple.svg){width="100%" fig-align="center"}
+
+$$ F' = f $$
+
+## 
+
+![](p_di.svg){width="100%" fig-align="center"}
+
+$$\int\limits_{-\infty}^b f(x) dx = F(b) $$
+
+## 
+
+![](p_di_ab.svg){width="100%" fig-align="center"}
+
+$$\int\limits_{a}^b f(x) dx = F(b) - F(a) $$
+
+:::{.fragment}
+
+"Inclusion-exclusion" principle
+
+:::
+
+## 
+
+![](p_di_ab.svg){width="100%" fig-align="center"}
+
+$F: [0,1] \to \mathbb{R}$ induces an function $H: \Delta_+ \to \mathbb{R}$
+$$ 
+\begin{align*}
+H: \quad & \Delta_+ &\to &\;\mathbb{R} \\
+   &(a,b) &\mapsto &\; F(b) - F(a)
+\end{align*}
+$$
+
+where $\Delta_+ \triangleq \{ (a,b) \in \mathbb{R}^2 : a \leq b\}$ denotes the _upper-left half plane_
+
+## 
+
+$F: [0,1] \to \mathbb{R}$ induces an function $H: \Delta_+ \to \mathbb{R}$ given by $H(a,b) = F(b) - F(a)$
+
+<br/>
+
+![](fs_h.svg){width="100%" fig-align="center"}
+
+## This talk: a *new* summary of functions
+
+![](summary.png){width="100%" height="90%" fig-align="center"}
+
+## Size Functions 
+
+![](p_abs.svg){width="100%" fig-align="center"}
+
+<!-- The _size function_ $S_f: \Delta_+ \to \mathbb{N}$ of $f$ count -->
+<!-- $$
+\begin{align}
+S_f: \Delta_+ & \to \mathbb{N} \\
+(a,b) \mapsto 
+\end{align}
+$$ -->
+> "The _size function_ $S_f: \Delta_+ \to \mathbb{N}$ of $f$ counts the number of connected components of $L\langle f \leq a\rangle$ containing at least one point of $L\langle f \leq b\rangle$"
+
+## Size Functions
+
+![](size_function.svg){width="500px" fig-align="center"}
+
+
+<!-- :::{.aside}
+Frosini, Patrizio, and Claudia Landi. "Size theory as a topological tool for computer vision." Pattern Recognition and Image Analysis 9.4 (1999): 596-603.
+::: -->
+
+## Representation theorem 
+
+<!-- $$\text{Define } \beta^{a,b} \triangleq S_f(a,b), \quad \text{ where } S_f: \Delta_+ \to \mathbb{N}$$ -->
+:::{.fragment}
+
+Define a _corner point_ via the following inclusion-exclusion formula: 
+<!-- 
+$$\mu^{a,b} \triangleq \min_{\delta > 0} \left(\beta_p^{a + \delta, b  - \delta} - \beta_p^{a + \delta, b + \delta} \right) - \left(\beta_p^{a - \delta, b - \delta} - \beta_p^{a - \delta, b + \delta} \right)$$ -->
+
+$$
+\begin{align*}
+\mu^{a,b} \triangleq \min_{\delta > 0} 
+& \left[S_f(a + \delta, b  - \delta) - S_f(a + \delta, b + \delta) \right] \\
+- & \left[S_f(a - \delta, b - \delta) - S_f(a - \delta, b + \delta) \right]
+\end{align*}
+$$
+
+:::
+
+:::{.fragment}
+
+It turns out that $S_f$ admits a compressed representation: 
+
+$$ S_f(\hat{a},\hat{b}) = \sum\limits_{a \leq \hat{a}\vphantom{\hat{b}}}\sum\limits_{b > \hat{b}} \mu^{a,b}$$
+
+:::
+
+:::{.fragment}
+
+The collection of all non-zero corner-points $\mu^\ast \neq 0$ is called the _persistence diagram_ of $f$:
+
+$$ \mathrm{dgm}(f) \triangleq \{ \, (a, b) :  \mu^{a,b} \neq 0  \, \} $$
+
+:::
+
+## Persistence diagram
+
+The collection of all non-zero corner-points $\mu^\ast \neq 0$ is called the _persistence diagram_ of $f$:
+
+$$ \mathrm{dgm}(f) \triangleq \{ \, (a, b) :  \mu^{a,b} \neq 0  \, \} $$
+
+![](persistence_diagram.svg){width=90% height=100% fig-align="center"}
+
+Can be constructed by _pairing_ the critical points of $f$ using the "elder rule"
+
+The corresponding function $S_f : \Delta_+ \to \mathbb{N}$ induced by $\mathrm{dgm}(f)$ is called _the rank invariant_ 
+
+## Activity! 
+
+Different functions $f, g$ may have identical diagrams ($f \mapsto S_f$ is _not_ injective)
+
+![](fun_dgm.svg){width="80%" height="100%" fig-align="center"}
+
+Can you think of any pair (or class) of functions which would have the same $\mathrm{dgm}$'s?
+
+## Diagram properties 
+
+<!-- Many properties of persistence diagrams are quite nice, including: -->
+
+:::{.fragment .fade-in-then-semi-out}
+
+(1) _Succinct:_ has at most $2K = O(K)$ points, where $K =$ < num. critical points of $f$ > 
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+(2) _Unique pairing_: for any given $f$, there is unique choice of how to pair critical points
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+(3) _Stable_: Distance between diagrams bounded above by _bottleneck distance_ $d_B$ 
+
+$$ d_B(\mathrm{dgm}(f), \mathrm{dgm}(g)) \leq \lVert f - g \rVert_\infty $$
+
+![](stability-cropped.gif){width=50% height=100% fig-align="center"}
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+(4) _Existence_: The most surprising property of this unique pairing is that it _exists_! 
+
+:::
+
+## Filtrations: Going beyond functions
+
+:::{.fragment .fade-in-then-semi-out}
+
+A _filtration_ is a pair $(K, f)$ where $f : K \to I$ satisfies $f(\tau) \leq f(\sigma)$ for all $\tau \subseteq \sigma \in K$
+
+$$ \emptyset = K_0 \subseteq K_1 \subseteq K_2 \subseteq \dots \subseteq K_N = K $$
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+Every pair $(a,b) \in I \times I$ sat. $a \leq b$ has inclusion maps $K_a \hookrightarrow K_b$ induces maps: 
+$$  0 = H_p(K_0) \to  H_p(K_1) \to \dots \to H_p(K_N) = H_p(K)$$
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+Sequence called a _persistence module_---images of $h_p^{a,b} : H_p(K_a) \to H_p(K_b)$ are PH groups:
+$$
+\begin{equation*}
+	H_{p}^{a,b} = \begin{cases}
+	H_p(K_a) & a = b \\ 
+ 	\mathrm{Im}\,h_p^{a,b} & a < b
+ \end{cases}
+, \quad \quad 
+\beta_p^{a,b} = \begin{cases}
+ 	\beta_p(K_a) & a = b \\
+ 	\mathrm{dim}(H_{p}^{a,b}) & a < b
+ \end{cases}
+\end{equation*}
+$$
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+When defined over a field $\mathbb{F}$, this sequence of homology groups _uniquely decompose_ $(K,f)$ into a pairing $(\sigma_a, \sigma_b)$ demarcating the evolution of homology classes.
+
+:::
+
+## A Brief History: PH's greatest hits™
+
+::: {.incremental}
+
+- [1992] Size functions discovered, related to _deformation distance_ between manifolds 
+- [2004] Size functions found to induce _natural pseudodistance_ between closed manifolds 
+- [2005] Homological inference using persistence shown to depend on _weak feature size_
+- [2009] $d_B$ on Rips filtrations yields _stable lower bound_ for Gromov-Hausdorff distance
+- [2013] Family of diagrams from _directional transform_ injective, sparking inverse theory 
+- [2018] Rank invariant discovered to generalize to _multi-parameter setting_
+- [2021] "Quasi-isometry" result relates _space of metric spaces_ to the _space of diagrams_
+- [2022] Connection between _Möbius inversion_ and (graded) rank invariant discovered 
+
+:::
+
+:::{.fragment style="font-size: 40px; font-weight: bold;"}
+
+AND WE DIDN'T DISCOVER IT UNTIL THE 90's! 
+
+:::
+
+## Example 1: Cluster trees 
+
+::: {.fragment .fade-in-then-semi-out}
+
+For some density $f$ on $\mathbb{R}^d$, consider clustering data $(X, d_X)$ into _density-based_ clusters: 
+
+$$ \{ \, x : f(x) \geq \lambda \, \} \text{ for all } \lambda > 0$$
+
+:::
+
+::: {.fragment .fade-in-then-semi-out}
+
+The set of all high-density clusters form a hierarchy called the _cluster tree_ of $f$ 
+
+![](cluster_tree.png){width=85% height=100% fig-align="center"}
+
+:::
+
+::: {.fragment .fade-in-then-semi-out}
+
+The _cluster tree_ $\mathbb{C}_f$ of $f$ is a function $\mathbb{C}_f: \mathbb{R} \to \Pi(\mathcal{X})$
+$$\mathbb{C}_f(\lambda) = \text{ connected components of } \{ \, x \in \mathcal{X} : f(x) \geq \lambda \, \} $$
+
+:::
+
+## Example 1: Cluster trees 
+
+:::{.fragment .fade-in-then-semi-out}
+
+The _cluster tree_ $\mathbb{C}_f$ of $f$ is a function $\mathbb{C}_f(\lambda) = \text{ components of } \{ \, x \in \mathcal{X} : f(x) \geq \lambda \, \}$
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+Let $\hat{\mathbb{C}}_n$ denote an _estimator_ of $\mathbb{C}_f$ constructed from $n$ points. 
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+For any sets $A, A' \subset \mathcal{X}$, let $A_n$ ($A_n'$) _smallest_ cluster of $\hat{\mathbb{C}}_n$ containing samples in $A$ ($A'$)
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+$\hat{\mathbb{C}}_n$ is _consistent_ iff, whenever $A \not\rightsquigarrow A' \subset \mathcal{X}$, we have: 
+
+$$P(A_n \text{ is disjoint from } A_n') \to 1 \text{ as } n \to \infty$$
+
+:::
+
+:::{.fragment}
+
+> "$\hat{\mathbb{C}}_n$ is consistent ... can asymptotically distinguish such clusters, or at least the largest possible [positive] fraction, passing arbitrarily close to all points in respective clusters"
+
+:::
+
+:::{.aside text-align="center"}
+
+Chaudhuri, Kamalika, and Sanjoy Dasgupta. "Rates of convergence for the cluster tree." NEURIPS 23 (2010).
+
+:::
+
+## Example 1: Cluster trees 
+
+Below is an example of a cluster tree $\hat{\mathbb{C}}_n$ exhibiting consistent behavior w.r.t $f$  
+
+![](hartigan_consistency.png){width=85% height=100% fig-align="center"}
+
+**The Clustering Problem**: How do we construct a consistent estimator $\hat{\mathbb{C}}_n$?
+
+## Example 1: Cluster Trees 
+
+![](animations/clustertree_consistency.gif){width="100%" height="80%" fig-align="center"}
+
+## Example 1: Cluster Trees 
+
+![](animations/mst_dgm_rips_sl.gif){width="60%" height="80%" fig-align="center"}
+
+## Example 1: Cluster Trees 
+
+![](images/hdbscan.png){width="85%" fig-align="center"}
+
+## Example 2: Topological Inference
+
+:::{.fragment style="margin-top: 1.5em;"}
+
+Suppose $X \subset \mathcal{X}$ is a point set sampled from some topological space $\mathcal{X} \subset \mathbb{R}^d$ 
+
+:::
+
+:::{.fragment .fade-in-then-semi-out style="font-size: 1.8em; margin-top: 1.1em;"}
+
+__Q__: How can we infer $\mathcal{X}$?
+
+:::
+
+:::{.fragment .fade-in-then-semi-out }
+
+<div style="padding-left: 1em; border: 1px solid black; margin: 2em; ">
+__Nerve Theorem__: 
+Let $\mathcal{U} = \{U_i\}_{i \in I}$ be a cover of a topological space $\mathcal{X}$ by open sets s.t. the intersection of any subcollection
+of $U_i$'s is either empty or contractible. Then $\mathcal{X}$ and $\mathrm{Nerve}(\mathcal{U})$ are homotopy equivalent.
+</div>
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+If we take $\mathcal{U} = \{ B(x, \epsilon)\}_{\epsilon > 0}$, then we might expect $\mathrm{Čech}_{\epsilon}(X)$ to capture the "shape" of $\mathcal{X}$, 
+if $X$ is sampled densely enough, as $\mathrm{Čech}_{\epsilon}(X)$ is homotopy equivalent to $\bigcup_{x \in X} B(x, \epsilon)$
+
+:::
+<!-- <div style="padding-left: 1em; border: 1px solid black; margin: 2em; ">
+__Čech Nerve Theorem__: 
+Let $\mathcal{U}$ collection of closed balls in $\mathbb{R}^d$ around ; if then the realization of the nerve of $\mathcal{U}$ 
+is homotopy equivalent to $\bigcup_{V \in \mathcal{U}} V$. 
+</div> -->
+<!-- If $X$ is sampled independently from $\mathcal{X}$, then as $\lvert X \rvert \to \infty$,  -->
+<!-- Let $\beta^{a,b}$ is the rank of the linear map in _homology_ induced by inclusion $f^{-1}(-\infty, a] \hookrightarrow f^{-1}(-\infty, b]$
+
+$$ \beta^{a,b} = \mathrm{rank}(f^{-1}(-\infty, a] \hookrightarrow f^{-1}(-\infty, b])$$ -->
+
+## Example 2: Topological inference 
+
+:::{.fragment .fade-in-then-semi-out}
+
+Consider filtering a given point set $X \subset \mathcal{X}$ via the _union-of-balls_ filtration:
+
+$$ \emptyset = \mathrm{Čech}_0(X) \subseteq \mathrm{Čech}_\epsilon(X) \subseteq \dots \subseteq \mathrm{Čech}_{\epsilon'}(X), \quad \mathrm{Čech}_\epsilon(X) = \{\, B(x, \epsilon) : x \in X \,\}$$
+
+![](images/union_of_balls.png){width="80%" height="20%" fig-align="center"}
+
+:::
+
+:::{.fragment .fade-in-then-semi-out}
+
+<div style="padding-left: 1em; border: 1px solid black; margin: 0em; font-size: 0.9em;">
+__Theorem__: Let $\mathcal{X} \subset \mathbb{R}^d$ be compact, with weak feature size $\mathrm{wfs}(\mathcal{X}) = 4\epsilon > 0$, and let $X \subset \mathbb{R}^d$ be a finite point set with Hausdorff distance $d_H(X, \mathcal{X})\leq \epsilon$ from $\mathcal{X}$. Then: 
+
+$$ \mathrm{rank}(H_p(\mathcal{X})) = \mathrm{rank}(H(d_X^{-1}[0, \epsilon]) \to H(d_X^{-1}[0, 3\epsilon]))$$
+
+$\Longrightarrow$ every homology class in $\mathcal{X}$ exists in sublevel set at $\epsilon$ + persists up to $3\epsilon$ 
+</div>
+
+:::

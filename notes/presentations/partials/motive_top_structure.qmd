@@ -1,0 +1,27 @@
+## Motivation: Finding topological structure
+
+:::{layout="[[25,50,25]]" layout-valign="bottom"}
+
+<div class="column" layout-align="right">
+![](animations/dgms_vineyards.gif){width=100%}
+</div>
+
+<div class="column" layout-align="center">
+![](images/dgm_opt.png){height=100% fig-align="center"}
+</div>
+
+<div class="column" layout-align="left">
+![](animations/complex_plain.gif){width=100%}
+</div>
+
+::::
+
+$$ 
+\alpha^\ast = \argmax_{\alpha \in \mathbb{R}} \; \mathrm{card}\big(\, \left.\mathrm{dgm}(K_\bullet, \, f_\alpha) \right|_{R} \, \big) 
+$$
+
+:::{style="text-align: center;"}
+
+We want to optimize persistence invariants in parameterized settings! 
+
+:::

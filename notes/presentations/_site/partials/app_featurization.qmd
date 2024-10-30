@@ -1,0 +1,60 @@
+## Application \#2: Featurization{visibility="visible"}
+
+<hr/>
+
+:::{.fragment style="text-align: center"}
+
+Consider filtering a fixed $K$ embedded in $R^d$ by a $1$-parameter directions in $S^{d-1}$
+
+$$
+K_\bullet = K(v)_i = \{\, x \in X \mid \langle x, v \rangle \leq i  \,\}
+$$
+
+:::
+
+
+:::{.fragment}
+
+![](animations/ph_transform.gif){width=550 height=100% fig-align="center"}
+
+:::
+
+
+:::{.fragment}
+
+$$\{ \; \mathrm{dgm}(v) : v \in S^{d-1} \; \} \Leftrightarrow \text{Persistent Homology Transform (PHT)}$$ 
+
+:::
+
+:::{.fragment style="text-align: center;"}
+
+Turner et al.$^1$ show PHT(X) is injective, sparking an inverse theory for persistence!
+
+:::
+
+::: aside 
+
+\(1\): @turner2014persistent
+
+:::
+
+## Application \#2: Featurization
+
+:::{.fragment}
+
+:::{layout=[[36,62]] style="text-align: center;"}
+
+![](animations/dt_single.gif){height=180px fig-align="right"}
+
+![](animations/trace_summary.gif){height=185px fig-align="left"}
+
+:::
+
+:::
+
+:::{.fragment}
+
+![](images/shape_signatures.png){width=550 height=50% fig-align="center"}
+
+:::
+

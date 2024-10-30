@@ -1,9 +1,11 @@
 # Custom 
 trash
-<<<<<<< HEAD
-notes 
-=======
->>>>>>> dc4425e48ae6e5cdfe0ff5e35a9e35efc6d028cc
+*.npz
+**/raw.github*
+**/*.dot
+**/*.npz
+**/*.mp4
+notebooks 
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

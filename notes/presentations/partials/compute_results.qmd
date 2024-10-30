@@ -1,0 +1,32 @@
+## Application: Computing $\mathrm{dgm}$'s in an output sensitive way
+
+
+:::{layout="[[50,50]]" layout-valign="bottom"}
+
+![](images/divide_conquer_dgm.png){width=400 height=100% fig-align="right"}
+
+![](images/bisection_tree.png){width=400 height=100% fig-align="left"}
+
+:::
+
+<div style="padding-left: 1em; border: 1px solid black; margin: 0em; ">
+__Theorem__: For a simplicial complex $K$ of size $n = \lvert K_p \rvert, m = \lvert K_{p+1} \rvert$, computing the $\Gamma$-persistent $H_p$ pairs requires $O(C_{(1-\delta)\Gamma} n^2 \log n)$ time and $O(\max{(m,n)})$ space. 
+</div>
+
+## Scalability: Low memory usage
+
+![](images/ripser_vs_laplacian.png){width=750 height=100% fig-align="center"}
+
+Asymptotics catch up: any reduction implementation uses $O(n^2)$ space, we use $O(n)$!
+
+:::{.aside style="font-size: 15px;"}
+
+All memory benchmark measured with _Memray_ memory profiler. Statistic shown is the highest recorded working memory.
+
+:::
+
+<!-- <div style="padding-left: 1em; border: 1px solid black; margin: 0em; ">
+__Theorem__: For a filtered simplicial complex $K$ of size $n = \lvert K\rvert$, computing the homology classes of persistence at least $\Gamma$ has time complexity: 
+$$ O\big( \left(\frac{1}{\delta} + C_{(1 - \delta)\Gamma} \log n\right) R_d(n)\big) $$
+and space complexity $O(dn + R_d(n))$, where $R_d(n)$ is the space complexity of computing the rank of an $n \times n$ matrix with $O(dn)$ nonzero entries. 
+</div> -->

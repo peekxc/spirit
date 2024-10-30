@@ -1,0 +1,10 @@
+## Application: Manifold detection (time permitting) {visibility="hidden"}
+
+:::{layout="[[50,50]]" layout-valign="bottom"}
+
+![](images/patch_manifold.png){width=90% fig-align="right"}
+
+![](images/klein_hilbert.png){width=90% fig-align="left"}
+
+:::
+

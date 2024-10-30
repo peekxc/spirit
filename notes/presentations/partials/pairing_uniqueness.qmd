@@ -1,0 +1,86 @@
+## Key technical observation
+
+
+:::{.fragment style="text-align: center;"}
+$$ 
+\begin{equation*}
+\Rightarrow \beta_p^{i,j} = \lvert C_p(K_i) \rvert - \mathrm{rank}(\partial_p^{1,i}) - \mathrm{rank}(\partial_{p+1 }^{1,j}) + \mathrm{rank}(\partial_{p+1}^{i + 1, j} ) 
+\end{equation*}
+$$
+
+$\Leftrightarrow$ Can deduce $\mathrm{dgm}$'s from ranks of "lower-left" blocks of $\partial_p(K_\bullet)$
+
+:::
+
+:::{.aside}
+
+1. Cohen-Steiner, David, Herbert Edelsbrunner, and Dmitriy Morozov. "Vines and vineyards by updating persistence in linear time." Proceedings of the twenty-second annual symposium on Computational geometry. 2006.
+
+:::
+
+## Key technical observation
+
+$$ 
+\begin{equation}
+\mathrm{rank}(R^{i,j}) = \mathrm{rank}(\partial^{i,j})  
+\end{equation}
+$$
+ 
+<hr>
+
+:::{.fragment}
+$$ 
+\begin{equation}
+(1) \Rightarrow \beta_p^{i,j} = \lvert C_p(K_i) \rvert - \mathrm{rank}(\partial_p^{1,i}) - \mathrm{rank}(\partial_{p+1 }^{1,j}) + \mathrm{rank}(\partial_{p+1}^{i + 1, j} ) 
+\end{equation}
+$$
+
+:::
+
+
+:::{.fragment}
+
+$$ 
+\begin{equation}
+(2) \Rightarrow \mu_p^{R} = \mathrm{rank}(\partial_{p+1}^{j + 1, k})  - \mathrm{rank}(\partial_{p+1}^{i + 1, k})  - \mathrm{rank}(\partial_{p+1}^{j + 1, l}) + \mathrm{rank}(\partial_{p+1}^{i + 1, l})  
+\end{equation}
+$$
+
+:::
+
+:::{.fragment}
+
+$(1)$ often used to show correctness of reduction, but far more general, as it implies:
+
+:::
+
+:::{.fragment}
+
+<div style="padding-left: 1em; border: 1px solid black; margin: 2em; ">
+__Corollary [@bauer2022keeping]__: Any algorithm that preserves the ranks of the submatrices $\partial^{i,j}$ for all $i,j \in \{ 1, \dots, n \}$ is a valid barcode algorithm.
+</div>
+
+:::
+
+<!-- <br/> 
+
+:::{.fragment}
+
+$$
+	{\color{green} \mu_p^{R}} = 
+	{\color{red} \mathrm{rank}}\begin{bmatrix} {\color{blue} \partial_{p+1}^{j + 1, k}} & 0 \\
+	0 & {\color{blue} \partial_{p+1}^{i + 1, l} }
+	\end{bmatrix}
+	- 
+	{\color{red} \mathrm{rank}}\begin{bmatrix} {\color{blue} \partial_{p+1}^{i + 1, k}} & 0 \\
+	0 & {\color{blue} \partial_{p+1}^{j + 1, l} }
+	\end{bmatrix}
+$$
+
+::: -->
+
+:::{.aside}
+
+@edelsbrunner2000topological noted (1) in passing showing correctness of reduction; @dey2022computational explicitly prove (2); (3) was used by @chen2011output. (2) & (3) are connected to relative homology.
+
+:::

@@ -1,0 +1,149 @@
+---
+title: Spectral relaxations of persistent rank invariants
+author: Matt Piekenbrock$\mathrm{}^\dagger$   \&   Jose Perea$\mathrm{}^\ddagger$
+format: 
+  revealjs:
+    institute: 
+      - $\dagger$ Khoury College of Computer Sciences, Northeastern University
+      - $\ddagger$. Department of Mathematics and Khoury College of Computer Sciences, Northeastern University
+    overview: true
+    margin: 0.075
+    css: 
+      - katex.min.css
+      - styles.css
+    html-math-method: 
+      method: katex 
+      url: "/"
+    smaller: true
+    theme: simple 
+    spotlight:
+      useAsPointer: false
+      size: 55
+      toggleSpotlightOnMouseDown: false
+      spotlightOnKeyPressAndHold: 16 # shift : 
+      presentingCursor: "default"
+    title-slide-attributes:
+      data-background-image: images/NE.jpeg
+      data-background-size: contain
+      data-background-opacity: "0.25"
+resources: ["partials/*.qmd"]
+bibliography: references.bib
+---
+
+{{< include partials/intro_learning.qmd >}}
+
+{{< include partials/intro_rank_md.qmd >}}
+
+## Overview
+
+<ul>
+  <li>Theory</li>
+  <ul>
+    <li>Rank duality</li>
+    <li>Spectral functions</li>
+    <li>Operator properties</li>
+  </ul>
+  <div style="color: #7F7F7F;"> 
+  <li><p>Applications</p></li>
+  <ul>
+    <li>Interpretations</li>
+    <li>Filtration optimization</li>
+  </ul>
+  </div>
+  <div style="color: #7F7F7F;"> 
+  <li><p>Computation (time permitting)</p></li>
+  <ul>
+    <li>Lanczos method</li>
+    <li>Stochastic Lanczos quadrature</li>
+    <li>matvecs are all you need</li>
+  </ul>
+  </div>
+</ul>
+
+{{< include partials/meth_deriv_ranknull.qmd >}}
+
+{{< include partials/meth_deriv_technical.qmd >}}
+
+## Overview
+
+<ul>
+  <div style="color: #7F7F7F;"> 
+  <li>Theory</li>
+  <ul>
+    <li>Rank duality</li>
+    <li>Spectral functions</li>
+    <li>Operator properties</li>
+  </ul>
+  </div>
+  <li><p>Applications</p></li>
+  <ul>
+    <li>Interpretations</li>
+    <li>Filtration optimization</li>
+  </ul>
+  <div style="color: #7F7F7F;"> 
+  <li><p>Computation (time permitting)</p></li>
+  <ul>
+    <li>Lanczos method</li>
+    <li>Stochastic Lanczos quadrature</li>
+    <li>matvecs are all you need</li>
+  </ul>
+  </div>
+</ul>
+
+{{< include partials/interp_regularization.qmd >}}
+
+{{< include partials/app_filtration_opt.qmd >}}
+
+<!-- {{< include partials/app_manifold_detect.qmd >}} -->
+
+
+## Overview
+
+<ul>
+  <div style="color: #7F7F7F;"> 
+  <li>Theory</li>
+  <ul>
+    <li>Rank duality</li>
+    <li>Spectral functions</li>
+    <li>Operator properties</li>
+  </ul>
+  </div>
+  <li><p>Applications</p></li>
+  <ul>
+    <li>Interpretations</li>
+    <li>Filtration optimization</li>
+  </ul>
+  <div style="color: #7F7F7F;"> 
+  <li><p>Computation (time permitting)</p></li>
+  <ul>
+    <li>Lanczos method</li>
+    <li>Stochastic Lanczos quadrature</li>
+    <li>matvecs are all you need</li>
+  </ul>
+  </div>
+</ul>
+
+{{< include partials/compute_spectral.qmd >}}
+
+{{< include partials/compute_tr_est.qmd >}}
+
+{{< include partials/compute_results.qmd >}}
+
+{{< include partials/app_dgms.qmd >}}
+
+{{< include partials/acknowledges.qmd >}}
+
+
+## References
+
+::: {#refs style="font-size: 12pt;"}
+:::
+
+<script>
+  window.WebFontConfig = {
+    custom: {
+      families: ['KaTeX_AMS'],
+    },
+  };
+</script>
+

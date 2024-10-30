@@ -1,0 +1,76 @@
+
+## Why not just use diagrams?
+
+<!-- Extending the reduction algorithm to parameterized settings is highly non-trivial -->
+
+:::: {.columns}
+
+:::{.fragment}
+
+::: {.column width="45%" layout-align="right" style="margin-left: 1em;"}
+![](animations/dgms_vineyards.gif){width=90%}
+:::
+
+::: {.column width="45%" height="1em" layout-align="left"}
+![](animations/complex_plain.gif){width=90%}
+:::
+
+:::
+
+::::
+
+:::{style="text-align: center;"}
+
+__Pro:__ Diagrams are stable, well-studied, and information rich.
+
+:::
+
+
+::: {.notes}
+Reduction algorithm is a restricted form of gaussian elimination. 
+:::
+
+
+## The Problem: Computation
+
+:::: {.columns}
+
+::: {.column width="33%"}
+![](animations/dgms_vineyards.gif){width=90%}
+:::
+
+::: {.column width="33%" height="1em"}
+![](animations/complex.gif){width=90%}
+:::
+
+::: {.column width="33%"}
+![](animations/spy_matrices.gif){width=90%}
+:::
+
+::::
+
+:::{style="text-align: center;"}
+
+__Con:__ Extending the $R = \partial V$ to parameterized settings is non-trivial
+
+:::
+
+<div style="text-align: center;">
+
+Maintaining the $R = \partial V$ decomposition "across time" $\implies$ huge memory bottleneck
+
+</div>
+
+:::{style="text-align: center;"}
+
+Main bottleneck in the 2D persistence algorithm RIVET
+
+:::
+
+:::{.aside}
+For details, see @piekenbrock2021move, @bauer2022keeping, and @lesnick2015interactive
+:::
+
+::: {.notes}
+Reduction algorithm is a restricted form of gaussian elimination. 
+:::

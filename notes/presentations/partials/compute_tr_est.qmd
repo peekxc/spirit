@@ -1,0 +1,137 @@
+## Randomized trace approximation
+
+<hr/> 
+
+
+<!-- :::{.fragment .fade-in-then-semi-out style="text-align: center"}
+
+$\Phi_\tau(X)$ are _trace-class_, satisfy $\mathtt{tr}(\Phi_\tau(X)) = \sum\limits_{i=1}^n \phi(\lambda_i, \tau)$
+
+::: -->
+
+::::{.fragment .fade-in-then-semi-out style="text-align: center"}
+
+Trace generalizes to _matrix functions_ via __stochastic Lanczos quadrature__$^1$
+
+$$ \mathrm{tr}(\Phi_\tau(X)) \approx \frac{n}{n_v} \sum\limits_{i=1}^{n_v} \bigg( e_1^T \, \Phi_{\tau}(T_i) \, e_1 \bigg ), \quad \quad T_i = \mathrm{Lanczos}(X, v_i) $$
+
+:::
+
+<!-- :::{.fragment .fade-in-then-semi-out style="text-align: center"}
+
+The degree-$k$ Lanczos takes $O(\eta \cdot k^2)$ time, where $\eta$ is the time to do $v \mapsto Xv$
+
+::: -->
+
+:::{.fragment .fade-in-then-semi-out style="text-align: center"}
+
+For $p$-Laplacians, the complexity of $v \mapsto L_p v$ is $\approx O(m)^1$ where $m = \lvert K_{p+1}\rvert$
+
+:::
+
+
+:::{.fragment .fade-in-then-semi-out style="text-align: center"}
+
+$\implies$ can compute $\epsilon$-approx.$^2$ of $\mu_p^{\ast}$ or $\beta_p^{\ast}$ with success probability $1 - \eta$ in: 
+
+$$ O((m / \epsilon^{2}) \log(\eta^{-1})) \text{ time}, \quad O(m) \text{ space }$$
+
+:::
+
+:::{.fragment .fade-in-then-semi-out style="text-align: center"}
+<hr/>
+
+$${\Large \text{ Matvecs are all you need! }}$$
+
+<hr/>
+:::
+
+::: aside 
+
+\(1\) Assumes $p$ is small, fixed constant. 
+\(2\) Assumes the Lanczos degree $k$ is constant. In practice, $k \leq 20$ is typically sufficient.
+
+:::
+
+## Brief history of spectral sum estimation {visibility="hidden"}
+
+This is an active area. Sampling of seminal work, improvements, and major applications:
+
+<div style="font-size: 1.425rem; text-align: center;"> 
+
+- \(1950\) Lanczos publishes "method of minimized iterations" for tridiagonalization
+- \(1969\) Golub + Welsch study Gaussian quadrature (GQ) rules 
+- \(1989\) Hutchinson proposes unbiased estimator for $\mathrm{tr}(A)$ based on QFs
+- \(2000\) Estrada proposes trace-based index quantifying "degree of folding" in proteins
+- \(2009\) Golub elucides connections between orthogonal polynomials, GQ, and "moment matching"
+- \(2017\) Ubaru proposes _stochastic Lanczos quadrature_: Hutchinson estimator + Lanczos quadrature
+- \(2017\) Musco finds Lanczos in FP is optimal for $v \mapsto f(A)v$ approx.
+- \(2019\) Hessian eigenvalue density found crucial to ImageNet performance (est. w/ trace)
+- \(2021\) Hutch++ proposed by Musco, achieves optimal $1/m^2$ variance reduction 
+- \(2021\) Adaptive variant of Hutch++ given that reduces query complexity
+- \(2021\) AdaHessian substantially improves Adam performance on ResNet32 + Cifar10
+- \(2023\) Epperly uses exchangability to produce family of minimum-variance $\mathrm{tr}$ estimators
+</div>
+
+
+## _Randomized_ implicit trace estimation {visibility="hidden"}
+
+<hr/>
+
+
+:::{.fragment .fade-in-then-semi-out style="text-align: center"}
+
+Let $A = \mathbb{R}^{n \times n}$. If $v \in \mathbb{R}^n$ a $\mathrm{r.v.}$ with $\mathbb{E}[vv^T] = I$, then: 
+
+:::
+
+:::{.fragment .fade-in-then-semi-out style="text-align: left;"}
+
+$$ \mathtt{tr}(A) = \mathtt{tr}(A \mathbb{E}[v v^T]) =  \mathbb{E}[\mathtt{tr}(Avv^T)] = \mathbb{E}[\mathtt{tr}(v^T A v)] = \mathbb{E}[v^T A v] $$
+
+:::
+
+:::{.fragment .fade-in-then-semi-out style="text-align: center"}
+$$
+\implies \mathtt{tr}(A) \approx \frac{1}{n_v}\sum\limits_{i=1}^{n_v} v_i^\top A v_i, \quad \text{ for } v_i \sim \{-1, +1\}^n
+$$
+:::
+
+:::{.fragment .fade-in-then-semi-out style="text-align: center"}
+
+<div style="padding-left: 1em; border: 1px solid black; margin: 0em; font-size: 0.9em;">
+__Theorem [@hutchinson1989stochastic]__: For any $A \in S_+^n$, if $n_v \geq (6/\epsilon^2) \log(2/\eta)$ unit-norm $v \in \mathbb{R}^n$ are drawn uniformly from $\{-1, +1\}^n$, then $\forall \; \epsilon, \eta \in (0,1)$:
+$$ \mathrm{Pr}\bigg(\lvert \mathrm{tr}_{n_v}(A) - \mathrm{tr}(A) \rvert \leq \epsilon \cdot \mathrm{tr}(A) \bigg) \geq 1 - \eta$$
+
+</div>
+
+:::
+
+<!-- :::{.fragment .fade-in-then-semi-out style="text-align: center"}
+
+Such an estimator $\mu_{n_v} \triangleq \mathrm{mean}(\{ v_i^T A v_i \}_{i=1}^{n_v})$ is called a _Girard-Hutchinson_ estimator
+
+::: -->
+
+:::{.fragment .fade-in-then-semi-out style="text-align: center"}
+
+$\implies$ can compute $\epsilon$-approx.$^2$ of $\mu_p^{\ast}$ or $\beta_p^{\ast}$ with success probability $1 - \eta$ in: 
+
+$$ O((m / \epsilon^{2}) \log(\eta^{-1})) \text{ time}, \quad O(m) \text{ space }$$
+
+:::
+
+:::{.fragment .fade-in-then-semi-out style="text-align: center"}
+<hr/>
+
+$${\Large \text{ Matvecs are all you need! }}$$
+
+<hr/>
+:::
+
+::: aside 
+
+\(1\) Assumes $p$ is small, fixed constant. 
+\(2\) Assumes the Lanczos degree $k$ is constant. In practice, $k \leq 20$ is typically sufficient.
+
+:::

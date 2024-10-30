@@ -1,0 +1,240 @@
+[
+  {
+    "objectID": "aatrn.html#learning-with-persistence",
+    "href": "aatrn.html#learning-with-persistence",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Learning with persistence",
+    "text": "Learning with persistence\nThere are many mappings from \\mathrm{dgm}’s to function spaces (e.g. Hilbert spaces)\n\n\nPersistence Landscapes (Bubenik 2020)\n\n\n\n\n\n\n\n\n \\lambda(k, t) = \\sup \\{ h \\geq 0 \\mid \\mathrm{rank}(H_p^{i-h} \\to H_p^{i+h}) \\geq k \\}"
+  },
+  {
+    "objectID": "aatrn.html#learning-with-persistence-1",
+    "href": "aatrn.html#learning-with-persistence-1",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Learning with persistence",
+    "text": "Learning with persistence\nThere are many mappings from \\mathrm{dgm}’s to function spaces (e.g. Hilbert spaces)\n\n\nPersistence Landscapes (Bubenik 2020) + Learning applications (Kim et al. 2020)\n\n\n\n \\lambda(k, t) = \\sup \\{ h \\geq 0 \\mid \\mathrm{rank}(H_p^{i-h} \\to H_p^{i+h}) \\geq k \\}"
+  },
+  {
+    "objectID": "aatrn.html#learning-with-persistence-2",
+    "href": "aatrn.html#learning-with-persistence-2",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Learning with persistence",
+    "text": "Learning with persistence\nThere are many mappings from \\mathrm{dgm}’s to function spaces (e.g. Hilbert spaces)\n\n\nPersistence Landscapes (Bubenik 2020) + Learning applications (Kim et al. 2020)\nPersistence Images (Adams et al. 2017)\n\n\n\n\n\n\n\n \\rho(f, \\phi) = \\sum\\limits_{(i,j) \\in \\mathrm{dgm}} f(i,j) \\phi(\\lvert j - i \\rvert)"
+  },
+  {
+    "objectID": "aatrn.html#learning-with-persistence-3",
+    "href": "aatrn.html#learning-with-persistence-3",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Learning with persistence",
+    "text": "Learning with persistence\nThere are many mappings from \\mathrm{dgm}’s to function spaces (e.g. Hilbert spaces)\n\n\nPersistence Landscapes (Bubenik 2020) + Learning applications (Kim et al. 2020)\nPersistence Images (Adams et al. 2017) + Learning applications (Som et al. 2020)\n\n\n\n\n\n\n\n \\rho(f, \\phi) = \\sum\\limits_{(i,j) \\in \\mathrm{dgm}} f(i,j) \\phi(\\lvert j - i \\rvert)"
+  },
+  {
+    "objectID": "aatrn.html#learning-with-persistence-4",
+    "href": "aatrn.html#learning-with-persistence-4",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Learning with persistence",
+    "text": "Learning with persistence\nThere are many mappings from \\mathrm{dgm}’s to function spaces (e.g. Hilbert spaces)\n\n\n\nPersistence Landscapes (Bubenik 2020) + Learning applications (Kim et al. 2020)\nPersistence Images (Adams et al. 2017) + Learning applications (Som et al. 2020)\n\n\n\n\nA few others…^1\n\n\n\n\n\n\nSee (Bubenik 2020) for an overview."
+  },
+  {
+    "objectID": "aatrn.html#many-goals-in-common",
+    "href": "aatrn.html#many-goals-in-common",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Many goals in common…",
+    "text": "Many goals in common…\n\n\n\nVectorize persistence information\nOptimize persistence invariants\nLeverage the stability of persistence\nConnect to other areas of mathematics\n\n\n\n\n\n\n\n\n\nCan we achieve these goals without computing diagrams?"
+  },
+  {
+    "objectID": "aatrn.html#this-talk---spectral-rank-invariants",
+    "href": "aatrn.html#this-talk---spectral-rank-invariants",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "This Talk - Spectral Rank Invariants",
+    "text": "This Talk - Spectral Rank Invariants\n\nWe introduce a spectral-relaxation of the  persistent rank invariants  \\beta_p^{\\ast} and \\mu_p^\\ast that:\n\nSmoothly interpolates persistent rank function \\leftrightarrow Laplacian norms\nAdmits (1 \\pm \\epsilon) approximation for any \\epsilon &gt; 0 in \\approx O(n^2) time\n“Matrix-free” computation in \\approx O(n) memory\nVariety of applications, e.g. featurization, optimization, metric learning"
+  },
+  {
+    "objectID": "aatrn.html#the-rank-invariant",
+    "href": "aatrn.html#the-rank-invariant",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "The Rank Invariant",
+    "text": "The Rank Invariant\n\nDuality between diagrams \\leftrightarrow rank function:\n \\mathrm{dgm}_p(\\, K_\\bullet, \\, f \\, ) \\triangleq \\{ \\, ( \\, i, j \\,) \\in \\Delta_+ :  \\mu_p^{i,j} \\neq 0 \\, \\} \\; \\cup \\; \\Delta \n\\textstyle \\mu_p^{i,j} = \\left(\\beta_p^{i,j{\\small -}1} - \\beta_p^{i,j} \\right) - \\left(\\beta_p^{i{\\small -}1,j{\\small -}1} - \\beta_p^{i{\\small -}1,j} \\right), \\quad \\beta_p^{k,l} = \\sum\\limits_{i \\leq k} \\sum\\limits_{j &gt; l} \\mu_p^{i,j}\n\n\n“Fundamental Lemma of Persistent Homology”: diagrams characterize their ranks\n\n\n\nPersistence measures (Chazal et al. 2016) extend (1,2) naturally when \\mathbb{F} = \\mathbb{R}\nStability in context of multidimensional persistence (Cerri et al. 2013)\nGeneralized via Möbius inversion (McCleary and Patel 2022), zigzag persistence(Tamal K. Dey, Kim, and Mémoli 2021)"
+  },
+  {
+    "objectID": "aatrn.html#the-rank-invariant-1",
+    "href": "aatrn.html#the-rank-invariant-1",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "The Rank Invariant",
+    "text": "The Rank Invariant\n\n“…whenever a persistence diagram is sought, it is enough to construct the corresponding persistence measure” (Chazal et al. 2016)"
+  },
+  {
+    "objectID": "aatrn.html#the-rank-invariant-2",
+    "href": "aatrn.html#the-rank-invariant-2",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "The Rank Invariant",
+    "text": "The Rank Invariant\n\n“…whenever a persistence diagram is sought, it is enough to construct the corresponding persistence measure” (Chazal et al. 2016)\n\n\n\n\n\n\n\nGoal: “Relax” this integer-valued function via spectral characterization of rank\n\n\\begin{equation*}\n\\beta_p^{a,b} = \\mathrm{rank}(H_p(K_a) \\to H_p(K_b)) \\quad \\Leftrightarrow \\quad \\mathrm{rank}(X) = \\sum_{i=1}^n \\, \\mathrm{sgn}_+(\\sigma_i)\n\\end{equation*}"
+  },
+  {
+    "objectID": "aatrn.html#overview",
+    "href": "aatrn.html#overview",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Overview",
+    "text": "Overview\n\n\nTheory\n\n\n\nRank duality\n\n\nSpectral functions\n\n\nOperator properties\n\n\n\n\n\nApplications\n\n\n\n\nInterpretations\n\n\nFiltration optimization\n\n\n\n\n\n\nComputation (time permitting)\n\n\n\n\nLanczos method\n\n\nStochastic Lanczos quadrature\n\n\nmatvecs are all you need"
+  },
+  {
+    "objectID": "aatrn.html#beyond-mathrmdgms-revisiting-the-rank-computation",
+    "href": "aatrn.html#beyond-mathrmdgms-revisiting-the-rank-computation",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Beyond \\mathrm{dgm}’s: Revisiting the rank computation",
+    "text": "Beyond \\mathrm{dgm}’s: Revisiting the rank computation\n \\beta_p^{i,j} : \\mathrm{rank}(H_p(K_i) \\to H_p(K_j))\n\n\\;\\quad\\quad\\quad\\beta_p^{i,j} = \\mathrm{dim} \\big( \\;\\mathrm{Ker}(\\partial_p(K_i))\\; / \\;\\mathrm{Im}(\\partial_{p+1}(K_j)) \\; \\big )\n\\;\\quad\\quad\\quad\\hphantom{\\beta_p^{i,j} }= \\mathrm{dim}\\big(\\; \\mathrm{Ker}(\\partial_p(K_i)) \\; / \\; (\\mathrm{Ker}(\\partial_p(K_i)) \\cap \\mathrm{Im}(\\partial_{p+1}(K_j))) \\; \\big )\n\\;\\quad\\quad\\quad\\hphantom{\\beta_p^{i,j}}=\\color{blue}{\\mathrm{dim}\\big(\\;\\mathrm{Ker}(\\partial_p(K_i)) \\; \\big)} \\; \\color{black}{-} \\; \\color{red}{\\mathrm{dim}\\big( \\; \\mathrm{Ker}(\\partial_p(K_i)) \\cap \\mathrm{Im}(\\partial_{p+1}(K_j))\\;\\; \\big)}\n\n\nRank-nullity yields the left term: \n\\mathrm{dim}\\big(\\mathrm{Ker}(\\partial_p(K_i))\\big) = \\lvert C_p(K_i) \\rvert - \\mathrm{dim}(\\mathrm{Im}(\\partial_p(K_i)))\n\n\n\n“Relaxing” the right term poses some difficulties:\n\n\nPseudo-inverse^1, projectors^2, Neumann’s inequality^3, etc.\nPID algorithm^4, Reduction algorithm^5, Persistent Laplacian^6\n\n\n\n\n\nAnderson Jr and Duffin (1969), Ben Israel (1967), Ben-Israel (2015), Zomorodian and Carlsson (2004), Edelsbrunner, Letscher, and Zomorodian (2000), Mémoli, Wan, and Wang (2022)"
+  },
+  {
+    "objectID": "aatrn.html#key-technical-observation",
+    "href": "aatrn.html#key-technical-observation",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Key technical observation",
+    "text": "Key technical observation\n\n\n\n\n\n\n\n\nPairing uniqueness lemma1 \\implies \\; \\mathrm{rank}(R^{i,j}) = \\mathrm{rank}(\\partial^{i,j})\n\n\n\n\\begin{equation*}\n\\Rightarrow \\beta_p^{i,j} = \\lvert C_p(K_i) \\rvert - \\mathrm{rank}(\\partial_p^{1,i}) - \\mathrm{rank}(\\partial_{p+1 }^{1,j}) + \\mathrm{rank}(\\partial_{p+1}^{i + 1, j} )\n\\end{equation*}\n\n\\Leftrightarrow Can deduce \\mathrm{dgm}’s from ranks of “lower-left” blocks of \\partial_p(K_\\bullet)\n\n\n\n\nCohen-Steiner, David, Herbert Edelsbrunner, and Dmitriy Morozov. “Vines and vineyards by updating persistence in linear time.” Proceedings of the twenty-second annual symposium on Computational geometry. 2006."
+  },
+  {
+    "objectID": "aatrn.html#key-technical-observation-1",
+    "href": "aatrn.html#key-technical-observation-1",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Key technical observation",
+    "text": "Key technical observation\n\n\\begin{equation}\n\\mathrm{rank}(R^{i,j}) = \\mathrm{rank}(\\partial^{i,j})  \n\\end{equation}\n\n\n\n\n\\begin{equation}\n(1) \\Rightarrow \\beta_p^{i,j} = \\lvert C_p(K_i) \\rvert - \\mathrm{rank}(\\partial_p^{1,i}) - \\mathrm{rank}(\\partial_{p+1 }^{1,j}) + \\mathrm{rank}(\\partial_{p+1}^{i + 1, j} )\n\\end{equation}\n\n\n\n\n\\begin{equation}\n(2) \\Rightarrow \\mu_p^{R} = \\mathrm{rank}(\\partial_{p+1}^{j + 1, k})  - \\mathrm{rank}(\\partial_{p+1}^{i + 1, k})  - \\mathrm{rank}(\\partial_{p+1}^{j + 1, l}) + \\mathrm{rank}(\\partial_{p+1}^{i + 1, l})  \n\\end{equation}\n\n\n\n(1) often used to show correctness of reduction, but far more general, as it implies:\n\n\n\nCorollary (Bauer et al. 2022): Any algorithm that preserves the ranks of the submatrices \\partial^{i,j} for all i,j \\in \\{ 1, \\dots, n \\} is a valid barcode algorithm.\n\n\n\n\n\nEdelsbrunner, Letscher, and Zomorodian (2000) noted (1) in passing showing correctness of reduction; Tamal Krishna Dey and Wang (2022) explicitly prove (2); (3) was used by Chen and Kerber (2011). (2) & (3) are connected to relative homology."
+  },
+  {
+    "objectID": "aatrn.html#relaxing-the-rank-function-1",
+    "href": "aatrn.html#relaxing-the-rank-function-1",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Relaxing the rank function",
+    "text": "Relaxing the rank function\n\n\n\n\n\\mathrm{rank}(X) = \\mathrm{rank}(X X^T) = \\sum_{i=1}^n \\, \\mathrm{sgn}_+(\\lambda_i) \\approx \\sum_{i=1}^n \\, \\phi(\\lambda_i, \\tau) \n\n\n\\text{ where } \\phi(x, \\tau) \\triangleq \\int\\limits_{-\\infty}^x\\hat{\\delta}(z, \\tau) dz \\text{ for a smoothed Dirac measure } \\hat{\\delta}^1\n\n\n\n\\phi : \\mathbb{R} \\to \\mathbb{R} induces a unique^2 spectral function F: S_{n} \\to \\mathbb{R} via its trace:\n\\mathrm{tr}(\\Phi_\\tau(X)) = \\sum\\limits_{i=1}^n \\phi(\\lambda_i, \\tau), \\quad \\Phi_\\tau(X) \\triangleq U \\phi_\\tau(\\Lambda) U^T \n\n\n\n\n\n\n(1) Any \\hat{\\delta} of the form \\nu(1/\\tau) p (z \\cdot \\nu (1/\\tau)) where p is a density function and \\nu positive and increasing is sufficient.\n(2) See Theorem 1.2 of Jiang and Sendov (2018) for uniqueness conditions."
+  },
+  {
+    "objectID": "aatrn.html#overview-1",
+    "href": "aatrn.html#overview-1",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Overview",
+    "text": "Overview\n\n\n\nTheory\n\n\n\nRank duality\n\n\nSpectral functions\n\n\nOperator properties\n\n\n\n\n\nApplications\n\n\n\n\nInterpretations\n\n\nFiltration optimization\n\n\n\n\n\nComputation (time permitting)\n\n\n\n\nLanczos method\n\n\nStochastic Lanczos quadrature\n\n\nmatvecs are all you need"
+  },
+  {
+    "objectID": "aatrn.html#interpretation-regularization",
+    "href": "aatrn.html#interpretation-regularization",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Interpretation: Regularization",
+    "text": "Interpretation: Regularization\n\nIll-posed linear systems Ax = b are often solved by “regularized” least-squares:\n\nx_\\tau^\\ast = \\argmin\\limits_{x \\in \\mathbb{R}^n} \\lVert Ax - b\\rVert^2 + \\tau \\lVert x \\rVert_1\n\n\n\nThe minimizer is given in closed-form by the regularized pseudo-inverse:\n\nx_\\tau^\\ast = (A^T A + \\tau I)^{-1} A^T b\n\n\n\n\n\n\n\n\n\n\n\nImage from: https://thaddeus-segura.com/lasso-ridge/"
+  },
+  {
+    "objectID": "aatrn.html#interpretation-regularization-1",
+    "href": "aatrn.html#interpretation-regularization-1",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Interpretation: Regularization",
+    "text": "Interpretation: Regularization\n\n\nUnder the appropriate parameters^1 for \\nu and p, \\phi takes the form:\n\n\n\\phi(x, \\tau) = \\frac{x^2}{x^2 + \\tau}\n\n\n\nThe corresponding Löwner operator and its Schatten 1-norm is given^2 by:\n\n\\Phi_\\tau(X) = (X^T X + \\tau \\, I_n)^{-1} X^T X, \\quad \\quad \\lVert \\Phi_\\tau(X) \\rVert_\\ast = \\sum\\limits_{i = 1}^n \\frac{\\sigma_i(X)^2}{\\sigma_i(X)^2 + \\tau}\n\n\n\n\nThis the  Tikhonov regularization  in standard form used in \\ell_1-regression (LASSO)\n\n\n\n\n\\Leftrightarrow \\tilde{\\beta}_p is a “Tikhonov-regularized Betti number”\n\n\n\n\n(1) This \\phi corresponds to setting \\nu(\\tau) = \\sqrt{\\tau} and p(x) = 2x (x^2 + 1)^{-2}; (2) See Theorem 2 in Zhao (2012)."
+  },
+  {
+    "objectID": "aatrn.html#application-1-filtration-optimization",
+    "href": "aatrn.html#application-1-filtration-optimization",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Application #1: Filtration optimization",
+    "text": "Application #1: Filtration optimization\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\\alpha^\\ast = \\argmax_{\\alpha \\in \\mathbb{R}} \\; \\mathrm{card}\\big(\\, \\left.\\mathrm{dgm}(K_\\bullet, \\, f_\\alpha) \\right|_{R} \\, \\big)"
+  },
+  {
+    "objectID": "aatrn.html#application-1-filtration-optimization-1",
+    "href": "aatrn.html#application-1-filtration-optimization-1",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Application #1: Filtration optimization",
+    "text": "Application #1: Filtration optimization\n\n\n\n\n\n\n\n\n\n\n\n\n\\alpha^\\ast = \\argmax_{\\alpha \\in \\mathbb{R}} \\; \\mathrm{card}\\big(\\, \\left.\\mathrm{dgm}(K_\\bullet, \\, f_\\alpha) \\right|_{R} \\, \\big)"
+  },
+  {
+    "objectID": "aatrn.html#application-1-filtration-optimization-2",
+    "href": "aatrn.html#application-1-filtration-optimization-2",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Application #1: Filtration optimization",
+    "text": "Application #1: Filtration optimization\n\n\n\n    \\mu_p^{R} =\n    \\mathrm{rank}\\begin{bmatrix} \\partial_{p+1}^{j + 1, k} & 0 \\\\\n    0 & \\partial_{p+1}^{i + 1, l}\n    \\end{bmatrix}\n    -\n    \\mathrm{rank}\\begin{bmatrix} \\partial_{p+1}^{i + 1, k} & 0 \\\\\n    0 & \\partial_{p+1}^{j + 1, l}\n    \\end{bmatrix}"
+  },
+  {
+    "objectID": "aatrn.html#application-1-filtration-optimization-3",
+    "href": "aatrn.html#application-1-filtration-optimization-3",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Application #1: Filtration optimization",
+    "text": "Application #1: Filtration optimization\n\n\n\n\\mu_p^{R} =\n\\mathrm{tr}\\begin{bmatrix} \\lVert \\partial_{p+1}^{j + 1, k} \\rVert_\\ast & 0 \\\\\n0 & \\lVert \\partial_{p+1}^{i + 1, l} \\rVert_{\\ast}\n\\end{bmatrix}\n-\n\\mathrm{tr}\\begin{bmatrix} \\lVert \\partial_{p+1}^{i + 1, k} \\rVert_\\ast & 0 \\\\\n0 & \\lVert  \\partial_{p+1}^{j + 1, l} \\rVert_\\ast\n\\end{bmatrix}"
+  },
+  {
+    "objectID": "aatrn.html#application-1-filtration-optimization-4",
+    "href": "aatrn.html#application-1-filtration-optimization-4",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Application #1: Filtration optimization",
+    "text": "Application #1: Filtration optimization\n\n\n\n\\hat{\\mu}_p^{R} =\n\\mathrm{tr}\\begin{bmatrix} \\Phi_\\tau(\\partial_{p+1}^{j + 1, k}) & 0 \\\\\n0 & \\Phi_\\tau(\\partial_{p+1}^{i + 1, l})\n\\end{bmatrix}\n-\n\\mathrm{tr}\\begin{bmatrix} \\Phi_\\tau(\\partial_{p+1}^{i + 1, k}) & 0 \\\\\n0 & \\Phi_\\tau(\\partial_{p+1}^{j + 1, l})\n\\end{bmatrix}\n\n\n\\boxed{\\text{There exists a positive }\\tau^\\ast &gt; 0 \\text{ such that } \\mu_p^R = \\lceil \\hat{\\mu}_p^R \\rceil \\text{ for all } \\tau \\in (0, \\tau^\\ast]}"
+  },
+  {
+    "objectID": "aatrn.html#application-1-filtration-optimization-6",
+    "href": "aatrn.html#application-1-filtration-optimization-6",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Application #1: Filtration optimization",
+    "text": "Application #1: Filtration optimization\n\n\n \\mu_p^{R} = \\mathrm{tr}\\begin{bmatrix} \\Phi_\\tau(\\partial_{p+1}^{j + 1, k}) & 0 \\\\\n0 & \\Phi_\\tau(\\partial_{p+1}^{i + 1, l})\n\\end{bmatrix}\n-\n\\mathrm{tr}\\begin{bmatrix} \\Phi_\\tau(\\partial_{p+1}^{i + 1, k}) & 0 \\\\\n0 & \\Phi_\\tau(\\partial_{p+1}^{j + 1, l})\n\\end{bmatrix}"
+  },
+  {
+    "objectID": "aatrn.html#application-1-filtration-optimization-7",
+    "href": "aatrn.html#application-1-filtration-optimization-7",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Application #1: Filtration optimization",
+    "text": "Application #1: Filtration optimization\n\n\n \\mu_p^{R} = \\mathrm{tr}\\begin{bmatrix} \\Phi_\\tau(\\partial_{p+1}^{j + 1, k}) & 0 \\\\\n0 & \\Phi_\\tau(\\partial_{p+1}^{i + 1, l})\n\\end{bmatrix}\n-\n\\mathrm{tr}\\begin{bmatrix} \\Phi_\\tau(\\partial_{p+1}^{i + 1, k}) & 0 \\\\\n0 & \\Phi_\\tau(\\partial_{p+1}^{j + 1, l})\n\\end{bmatrix}\n\n\nSimilar to the Iterative Soft-Thresholding Algorithm (ISTA) (Beck 2017)"
+  },
+  {
+    "objectID": "aatrn.html#overview-2",
+    "href": "aatrn.html#overview-2",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Overview",
+    "text": "Overview\n\n\n\nTheory\n\n\n\nRank duality\n\n\nSpectral functions\n\n\nOperator properties\n\n\n\n\n\nApplications\n\n\n\n\nInterpretations\n\n\nFiltration optimization\n\n\n\n\n\nComputation (time permitting)\n\n\n\n\nLanczos method\n\n\nStochastic Lanczos quadrature\n\n\nmatvecs are all you need"
+  },
+  {
+    "objectID": "aatrn.html#computation",
+    "href": "aatrn.html#computation",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Computation",
+    "text": "Computation\n\n\n\nTypical compute A = U \\Lambda U^T bounded by \\Theta(n^3) time and \\Theta(n^2) space1\n\n\nHowever, if v \\mapsto Av \\approx O(n), then \\Lambda is obtainable in  O(n^2) time  and O(n) space!\n\n\nIdea: For some random v \\in \\mathbb{R}^n, expand successive powers of A:\n\n\\begin{align}\nK_j &= [ v \\mid Av \\mid A^2 v \\mid \\dots \\mid A^{j-1}v] && \\\\\nQ_j &= [ q_1, q_2, \\dots, q_j] \\gets \\mathrm{qr}(K_j) && \\\\\nT_j &= Q_j^T A Q_j &&\n\\end{align}\n\n\n\nEvery symmetric A expanded this way admits a three-term recurrence\n A q_j = \\beta_{j-1} q_{j-1} + \\alpha_j q_j + \\beta_j q_{j+1} \n\n\n\nThis is the renowned Lanczos method for Krylov subspace expansion\n\n\n\n\nAssumes the standard matrix multiplication model for simplicity (i.e. excludes the Strassen-family)"
+  },
+  {
+    "objectID": "aatrn.html#lanczos-iteration",
+    "href": "aatrn.html#lanczos-iteration",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Lanczos iteration",
+    "text": "Lanczos iteration\n\n\n\n\n\n\nTheorem (Simon 1984): Given a symmetric rank-r matrix A \\in \\mathbb{R}^{n \\times n} whose matrix-vector operator A \\mapsto A x requires O(\\eta) time and O(\\nu) space, the Lanczos iteration computes \\Lambda(A) = \\{ \\lambda_1, \\lambda_2, \\dots, \\lambda_r \\} in O(\\max\\{\\eta, n\\}\\cdot r) time and O(\\max\\{\\nu, n\\}) space when executed in exact arithmetic."
+  },
+  {
+    "objectID": "aatrn.html#randomized-trace-approximation",
+    "href": "aatrn.html#randomized-trace-approximation",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Randomized trace approximation",
+    "text": "Randomized trace approximation\n\n\n\nUbaru^1 showed \\mu_{n_v} generalizes to matrix functions via stochastic Lanczos quadrature\n \\mathrm{tr}(\\Phi_\\tau(X)) \\approx \\frac{n}{n_v} \\sum\\limits_{i=1}^{n_v} \\bigg( e_1^T \\, \\Phi_{\\tau}(T_i) \\, e_1 \\bigg ), \\quad \\quad T_i = \\mathrm{Lanczos}(X, v_i) \n\n\n\nFor p-Laplacians, the complexity of v \\mapsto L_p v is \\approx O(m)^1 where m = \\lvert K_{p+1}\\rvert\n\n\n\\implies can compute \\epsilon-approx.^2 of \\mu_p^{\\ast} or \\beta_p^{\\ast} with success probability 1 - \\eta in:\n O((m / \\epsilon^{2}) \\log(\\eta^{-1})) \\text{ time}, \\quad O(m) \\text{ space }\n\n\n\n{\\Large \\text{ Matvecs are all you need! }}\n\n\n\n\n(1) Assumes p is small, fixed constant. (2) Assumes the Lanczos degree k is constant. In practice, k \\leq 20 is typically sufficient."
+  },
+  {
+    "objectID": "aatrn.html#scalability-mathrmmatvecss-are-all-you-need",
+    "href": "aatrn.html#scalability-mathrmmatvecss-are-all-you-need",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Scalability: \\mathrm{matvecs}’s are all you need",
+    "text": "Scalability: \\mathrm{matvecs}’s are all you need\n\n\n\n\n\nFigure taken from the new imate package documentation ([gh]/ameli/imate)"
+  },
+  {
+    "objectID": "aatrn.html#scalability-low-memory-usage",
+    "href": "aatrn.html#scalability-low-memory-usage",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Scalability: Low memory usage",
+    "text": "Scalability: Low memory usage"
+  },
+  {
+    "objectID": "aatrn.html#application-computing-mathrmdgms",
+    "href": "aatrn.html#application-computing-mathrmdgms",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Application: Computing \\mathrm{dgm}’s",
+    "text": "Application: Computing \\mathrm{dgm}’s\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTheorem (Chen and Kerber 2011): For a simplicial complex K of size \\lvert K \\rvert = n, computing the \\Gamma-persistent pairs requires O(C_{(1-\\delta)\\Gamma}\\mathrm{R}(n) \\log n) time and O(n + \\mathrm{R}(n)) space, where R(n) (R_S(n)) is the time (space) complexity of computing the rank of a n \\times n boundary matrix."
+  },
+  {
+    "objectID": "aatrn.html#acknowledgements-advertising",
+    "href": "aatrn.html#acknowledgements-advertising",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "Acknowledgements & Advertising",
+    "text": "Acknowledgements & Advertising\n\nExplicit proof of (unfactored) \\beta_p^{\\ast} in CT book by (Tamal Krishna Dey and Wang 2022)\nRank-based PH algorithm originally due to (Chen and Kerber 2011)\nInsightful developments by (Bauer et al. 2022) and (Mémoli, Wan, and Wang 2022)\n(1\\pm \\epsilon)-Tr est. due to (Ubaru, Chen, and Saad 2017) + (Musco, Musco, and Sidford 2018)\n\n\n\nInfo: [gh]/peekxc or mattpiekenbrock.com\nTrace estimator available @ gh/peekxc/primate\n\n\n\nThanks for listening!"
+  },
+  {
+    "objectID": "aatrn.html#references",
+    "href": "aatrn.html#references",
+    "title": "Spectral relaxations of persistent rank invariants",
+    "section": "References",
+    "text": "References\n\n\nAdams, Henry, Tegan Emerson, Michael Kirby, Rachel Neville, Chris Peterson, Patrick Shipman, Sofya Chepushtanova, Eric Hanson, Francis Motta, and Lori Ziegelmeier. 2017. “Persistence Images: A Stable Vector Representation of Persistent Homology.” Journal of Machine Learning Research 18.\n\n\nAnderson Jr, William N, and Richard James Duffin. 1969. “Series and Parallel Addition of Matrices.” Journal of Mathematical Analysis and Applications 26 (3): 576–94.\n\n\nBauer, Ulrich, Talha Bin Masood, Barbara Giunti, Guillaume Houry, Michael Kerber, and Abhishek Rathod. 2022. “Keeping It Sparse: Computing Persistent Homology Revised.” arXiv Preprint arXiv:2211.09075.\n\n\nBauschke, Heinz H, Patrick L Combettes, et al. 2011. Convex Analysis and Monotone Operator Theory in Hilbert Spaces. Vol. 408. Springer.\n\n\nBeck, Amir. 2017. First-Order Methods in Optimization. SIAM.\n\n\nBen Israel, Adi. 1967. “On the Geometry of Subspaces in Euclidean n-Spaces.” SIAM Journal on Applied Mathematics 15.\n\n\nBen-Israel, Adi. 2015. “Projectors on Intersection of Subspaces.” Contemporary Mathematics 636: 41–50.\n\n\nBhatia, Rajendra. 2013. Matrix Analysis. Vol. 169. Springer Science & Business Media.\n\n\nBoissonnat, Jean-Daniel, and Clément Maria. 2014. “The Simplex Tree: An Efficient Data Structure for General Simplicial Complexes.” Algorithmica 70: 406–27.\n\n\nBubenik, Peter. 2020. “The Persistence Landscape and Some of Its Properties.” In Topological Data Analysis: The Abel Symposium 2018, 97–117. Springer.\n\n\nCerri, Andrea, Barbara Di Fabio, Massimo Ferri, Patrizio Frosini, and Claudia Landi. 2013. “Betti Numbers in Multidimensional Persistent Homology Are Stable Functions.” Mathematical Methods in the Applied Sciences 36 (12): 1543–57.\n\n\nChazal, Frédéric, Vin De Silva, Marc Glisse, and Steve Oudot. 2016. The Structure and Stability of Persistence Modules. Vol. 10. Springer.\n\n\nChen, Chao, and Michael Kerber. 2011. “An Output-Sensitive Algorithm for Persistent Homology.” In Proceedings of the Twenty-Seventh Annual Symposium on Computational Geometry, 207–16.\n\n\nDey, Tamal K, Woojin Kim, and Facundo Mémoli. 2021. “Computing Generalized Rank Invariant for 2-Parameter Persistence Modules via Zigzag Persistence and Its Applications.” arXiv Preprint arXiv:2111.15058.\n\n\nDey, Tamal Krishna, and Yusu Wang. 2022. Computational Topology for Data Analysis. Cambridge University Press.\n\n\nEdelsbrunner, Herbert, David Letscher, and Afra Zomorodian. 2000. “Topological Persistence and Simplification.” In Proceedings 41st Annual Symposium on Foundations of Computer Science, 454–63. IEEE.\n\n\nHutchinson, Michael F. 1989. “A Stochastic Estimator of the Trace of the Influence Matrix for Laplacian Smoothing Splines.” Communications in Statistics-Simulation and Computation 18 (3): 1059–76.\n\n\nJambulapati, Arun, and Aaron Sidford. 2021. “Ultrasparse Ultrasparsifiers and Faster Laplacian System Solvers.” In Proceedings of the 2021 ACM-SIAM Symposium on Discrete Algorithms (SODA), 540–59. SIAM.\n\n\nJiang, Tianpei, and Hristo Sendov. 2018. “A Unified Approach to Operator Monotone Functions.” Linear Algebra and Its Applications 541: 185–210.\n\n\nKim, Kwangho, Jisu Kim, Manzil Zaheer, Joon Kim, Frédéric Chazal, and Larry Wasserman. 2020. “Pllay: Efficient Topological Layer Based on Persistent Landscapes.” Advances in Neural Information Processing Systems 33: 15965–77.\n\n\nKomzsik, Louis. 2003. The Lanczos Method: Evolution and Application. SIAM.\n\n\nMcCleary, Alexander, and Amit Patel. 2022. “Edit Distance and Persistence Diagrams over Lattices.” SIAM Journal on Applied Algebra and Geometry 6 (2): 134–55.\n\n\nMémoli, Facundo, Zhengchao Wan, and Yusu Wang. 2022. “Persistent Laplacians: Properties, Algorithms and Implications.” SIAM Journal on Mathematics of Data Science 4 (2): 858–84.\n\n\nMusco, Cameron, Christopher Musco, and Aaron Sidford. 2018. “Stability of the Lanczos Method for Matrix Function Approximation.” In Proceedings of the Twenty-Ninth Annual ACM-SIAM Symposium on Discrete Algorithms, 1605–24. SIAM.\n\n\nParlett, Beresford N. 1995. “Do We Fully Understand the Symmetric Lanczos Algorithm Yet?” CALIFORNIA UNIV BERKELEY DEPT OF MATHEMATICS.\n\n\nSimon, Horst D. 1984. “Analysis of the Symmetric Lanczos Algorithm with Reorthogonalization Methods.” Linear Algebra and Its Applications 61: 101–31.\n\n\nSom, Anirudh, Hongjun Choi, Karthikeyan Natesan Ramamurthy, Matthew P Buman, and Pavan Turaga. 2020. “Pi-Net: A Deep Learning Approach to Extract Topological Persistence Images.” In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops, 834–35.\n\n\nStathopoulos, Andreas, and James R McCombs. 2007. “Nearly Optimal Preconditioned Methods for Hermitian Eigenproblems Under Limited Memory. Part II: Seeking Many Eigenvalues.” SIAM Journal on Scientific Computing 29 (5): 2162–88.\n\n\nUbaru, Shashanka, Jie Chen, and Yousef Saad. 2017. “Fast Estimation of Tr(f(a)) via Stochastic Lanczos Quadrature.” SIAM Journal on Matrix Analysis and Applications 38 (4): 1075–99.\n\n\nZhao, Yun-Bin. 2012. “An Approximation Theory of Matrix Rank Minimization and Its Application to Quadratic Equations.” Linear Algebra and Its Applications 437 (1): 77–93.\n\n\nZomorodian, Afra, and Gunnar Carlsson. 2004. “Computing Persistent Homology.” In Proceedings of the Twentieth Annual Symposium on Computational Geometry, 347–56."
+  }
+]

@@ -1,0 +1,149 @@
+## Application: optimizing filtrations {visibility="hidden"}
+
+![](images/combined_mult.png){width=68% height=100% fig-align="center"}
+
+$$ \alpha^\ast = \argmax_{\alpha \in \mathbb{R}} \; \mathrm{card}\big(\, \left.\mathrm{dgm}(K_\bullet, \, f_\alpha) \right|_{R} \, \big) $$
+
+
+## Application \#1: Filtration optimization
+
+:::{layout="[[25,50,25]]" layout-valign="bottom"}
+
+<div class="column" layout-align="right">
+![](animations/dgms_vineyards.gif){width=100%}
+</div>
+
+<div class="column" layout-align="center">
+![](images/dgm_opt.png){height=100% fig-align="center"}
+</div>
+
+<div class="column" layout-align="left">
+![](animations/complex_plain.gif){width=100%}
+</div>
+
+::::
+
+$$ 
+\alpha^\ast = \argmax_{\alpha \in \mathbb{R}} \; \mathrm{card}\big(\, \left.\mathrm{dgm}(K_\bullet, \, f_\alpha) \right|_{R} \, \big) 
+$$
+
+## Application: Filtration optimization
+
+:::{layout="[[60,30]]" layout-valign="bottom"}
+
+<div class="column" layout-align="right">
+![](images/codensity_mult.png)
+</div>
+
+<div class="column" layout-align="center">
+![](images/optimal_codensity_complex.png){width=100% height=100%}
+</div>
+
+:::
+
+$$ 
+\alpha^\ast = \argmax_{\alpha \in \mathbb{R}} \; \mathrm{card}\big(\, \left.\mathrm{dgm}(K_\bullet, \, f_\alpha) \right|_{R} \, \big) 
+$$
+
+
+## Application: Filtration optimization
+
+![](images/codensity_ex1.png){width=60%, fig-align="center"}
+
+<br/>
+
+$$ 
+	\mu_p^{R} = 
+	\mathrm{rank}\begin{bmatrix} \partial_{p+1}^{j + 1, k} & 0 \\
+	0 & \partial_{p+1}^{i + 1, l}
+	\end{bmatrix}
+	- 
+	\mathrm{rank}\begin{bmatrix} \partial_{p+1}^{i + 1, k} & 0 \\
+	0 & \partial_{p+1}^{j + 1, l}
+	\end{bmatrix}
+$$
+
+## Application: Filtration optimization
+
+![](images/codensity_ex2.png){width=60%, fig-align="center"}
+
+<br/>
+
+$$ 
+\mu_p^{R} = 
+\mathrm{tr}\begin{bmatrix} \lVert \partial_{p+1}^{j + 1, k} \rVert_\ast & 0 \\
+0 & \lVert \partial_{p+1}^{i + 1, l} \rVert_{\ast}
+\end{bmatrix}
+- 
+\mathrm{tr}\begin{bmatrix} \lVert \partial_{p+1}^{i + 1, k} \rVert_\ast & 0 \\
+0 & \lVert  \partial_{p+1}^{j + 1, l} \rVert_\ast
+\end{bmatrix}
+$$
+
+## Application: Filtration optimization
+
+![](images/codensity_ex3.png){width=60%, fig-align="center"}
+
+<br/>
+
+$$ 
+\hat{\mu}_p^{R} = 
+\mathrm{tr}\begin{bmatrix} \Phi_\tau(\partial_{p+1}^{j + 1, k}) & 0 \\
+0 & \Phi_\tau(\partial_{p+1}^{i + 1, l})
+\end{bmatrix}
+- 
+\mathrm{tr}\begin{bmatrix} \Phi_\tau(\partial_{p+1}^{i + 1, k}) & 0 \\
+0 & \Phi_\tau(\partial_{p+1}^{j + 1, l})
+\end{bmatrix}
+$$
+
+:::{.fragment }
+
+$$\boxed{\text{There exists a positive }\tau^\ast > 0 \text{ such that } \mu_p^R = \lceil \hat{\mu}_p^R \rceil \text{ for all } \tau \in (0, \tau^\ast]}$$
+
+:::
+
+
+## Application: Filtration optimization {visibility="hidden"}
+
+![](images/combinatorial_explosion.png){width=60%, fig-align="center"}[^1]
+
+
+[^1]: Xu, Weiyu, and Babak Hassibi. "Precise Stability Phase Transitions for $\ell_1 $ Minimization: A Unified Geometric Framework." IEEE transactions on information theory (2011)
+
+
+## Application: Filtration optimization
+
+![](images/codensity_ex4.png){width=60%, fig-align="center"}
+
+<br/>
+
+$$ \mu_p^{R} = \mathrm{tr}\begin{bmatrix} \Phi_\tau(\partial_{p+1}^{j + 1, k}) & 0 \\
+0 & \Phi_\tau(\partial_{p+1}^{i + 1, l})
+\end{bmatrix}
+- 
+\mathrm{tr}\begin{bmatrix} \Phi_\tau(\partial_{p+1}^{i + 1, k}) & 0 \\
+0 & \Phi_\tau(\partial_{p+1}^{j + 1, l})
+\end{bmatrix}
+$$
+
+## Application: Filtration optimization
+
+![](images/codensity_ex5.png){width=60%, fig-align="center"}
+
+<br/>
+
+$$ \mu_p^{R} = \mathrm{tr}\begin{bmatrix} \Phi_\tau(\partial_{p+1}^{j + 1, k}) & 0 \\
+0 & \Phi_\tau(\partial_{p+1}^{i + 1, l})
+\end{bmatrix}
+- 
+\mathrm{tr}\begin{bmatrix} \Phi_\tau(\partial_{p+1}^{i + 1, k}) & 0 \\
+0 & \Phi_\tau(\partial_{p+1}^{j + 1, l})
+\end{bmatrix}
+$$
+
+:::{.fragment style="text-align: center"}
+
+Similar to the Iterative Soft-Thresholding Algorithm (ISTA) [@beck2017first]
+
+:::

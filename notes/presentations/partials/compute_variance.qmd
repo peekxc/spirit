@@ -1,0 +1,9 @@
+## Time Permitting: Variance
+
+One barrier preventing SOTA performance in time: *efficiency*. 
+
+![](images/stochastic_trace_estimates.png){width=90%}
+
+Potential ways to improve efficiency include control variables @kleijnen2010variance, better estimators (e.g. @meyer2021hutchpp), and low-stretch spanning trees @pilavci2022variance
+
+

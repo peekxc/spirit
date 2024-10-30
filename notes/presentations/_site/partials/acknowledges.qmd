@@ -1,0 +1,23 @@
+## Acknowledgements & Advertising
+
+- Explicit proof of (unfactored) $\beta_p^{\ast}$ in CT book by [@dey2022computational]
+- Rank-based PH algorithm originally due to [@chen2011output]
+- Insightful developments by [@bauer2022keeping] and [@memoli2022persistent]
+- $(1\pm \epsilon)$-Tr est. due to [@ubaru2017fast] + [@musco2018stability]
+<hr/>
+
+<div style="text-align: center; font-size: 40px;"> 
+
+Info: [[gh]/peekxc](https://github.com/peekxc) or [mattpiekenbrock.com](https://mattpiekenbrock.com/)
+
+Trace estimator available @ [gh/peekxc/primate](https://peekxc.github.io/primate/)
+
+</div>
+
+<hr/>
+
+<div style="text-align: center; font-size: 80px;"> 
+
+Thanks for listening! 
+
+</div>

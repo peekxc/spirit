@@ -1,0 +1,52 @@
+
+## Parameterized filtrations {visibility="hidden"}
+
+Suppose we have an $\alpha$-parameterized filtration $(K, f_\alpha)$ where $f_\alpha : K \to \mathbb{R}_+$ satisfies:
+
+$$
+f_\alpha(\tau) \leq f_\alpha(\sigma) \quad \text{ if } \tau \subseteq \sigma \quad \forall \tau,\sigma \in K \text{ and } \alpha \in \mathbb{R}
+$$
+
+:::{layout-ncol=2}
+
+![](animations/codensity_family.gif){width=48% height=100% fig-align="right"}
+
+![](animations/complex_plain.gif){width=48% height=100% fig-align="left"}
+
+:::
+
+## __Relax \#1__: Parameterized _boundary matrices_ {visibility="hidden"}
+
+:::{.fragment style="text-align: center;"}
+
+Parameterize $C_p(K; \mathbb{R})$ with $\mathcal{S} \circ f_\alpha : K \to \mathbb{R}_+$ where $\mathcal{S}: \mathbb{R} \to [0,1]$  
+
+
+:::
+
+:::{.fragment style="text-align: center;"}
+
+![](images/smoothstep_3.jpeg){width=88% height=100% fig-align="center"}
+
+:::
+
+
+:::{.fragment style="text-align: center; border: 1;"}
+
+$$ 
+\boxed{
+\partial_p^{i,j}(\alpha) = D_p(\mathcal{S}_i \circ f_\alpha) \circ \partial_p(K_\preceq) \circ D_{p+1}(\mathcal{S}_j \circ f_\alpha) 
+}
+$$ 
+
+:::
+
+:::{.fragment style="text-align: center;"}
+
+__Note__: $P^T \partial_p^{i,j}(\alpha) P$ has rank $= \mathrm{rank}(R_p^{i,j}(\alpha))$ for all $\alpha \in \mathbb{R}$. 
+
+:::
+
+:::{.aside style="text-align: center;"}
+Replacing $S \mapsto \mathcal{S}$ ensures continuity of $\partial_p^{i,j}(\alpha)$
+:::

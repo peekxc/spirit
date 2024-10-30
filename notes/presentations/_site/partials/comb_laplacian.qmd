@@ -1,0 +1,139 @@
+## Combinatorial Laplacian {visibility="hidden"}
+
+__Relax #3:__ Replace $\partial \mapsto L$ with _combinatorial Laplacians_ [@horak2013spectra]:
+
+$$ \Delta_p = \underbrace{\partial_{p+1} \partial_{p+1}^T}_{L_p^{\mathrm{up}}}  + \underbrace{\partial_{p}^T \partial_{p}}_{L_p^{\mathrm{dn}}} $$
+
+:::{.fragment}
+
+$f_\alpha$ is 1-to-1 correspondence with inner products on cochain groups $C^p(K, \mathbb{R})$ 
+
+$$L_p^{i,j}(\alpha) \Leftrightarrow \langle \; f,\, g \; \rangle_{\alpha} \; \text{ on } \;  C^{p+1}(K, \mathbb{R})$$
+
+::: 
+
+:::{.fragment}
+
+Benefits: Symmetric, positive semi-definite, have "nice" linear and quadratic forms:
+$$
+L_p^{\text{up}}(\tau, \tau')= \begin{cases}
+		 \mathrm{deg}_f(\tau) \cdot f^{+/2}(\tau) & \text{ if } \tau = \tau' \\ 
+%		\mathrm{deg}(\tau_i) & \text{ if } i = j \\ 
+		s_{\tau, \tau'} \cdot  f^{+/2}(\tau) \cdot f(\sigma) \cdot f^{+/2}(\tau') & \text{ if } \tau \overset{\sigma}{\sim} \tau' \\
+		0 & \text{ otherwise} 
+	\end{cases}
+$$
+
+$\implies$ can represent operator in "matrix-free" fashion
+:::
+
+## Parameterized filtrations {visibility="hidden"}
+
+Suppose we have an $\alpha$-parameterized filtration $(K, f_\alpha)$ where $f_\alpha : K \to \mathbb{R}_+$ satisfies:
+
+$$
+f_\alpha(\tau) \leq f_\alpha(\sigma) \quad \text{ if } \tau \subseteq \sigma \quad \forall \tau,\sigma \in K \text{ and } \alpha \in \mathbb{R}
+$$
+
+:::{layout-ncol=2}
+
+![](animations/codensity_family.gif){width=48% height=100% fig-align="right"}
+
+![](animations/complex_plain.gif){width=48% height=100% fig-align="left"}
+
+:::
+
+## __Relax \#1__: Parameterized _boundary matrices_ {visibility="hidden"}
+
+:::{.fragment style="text-align: center;"}
+
+Parameterize $C_p(K; \mathbb{R})$ with $\mathcal{S} \circ f_\alpha : K \to \mathbb{R}_+$ where $\mathcal{S}: \mathbb{R} \to [0,1]$  
+
+
+:::
+
+:::{.fragment style="text-align: center;"}
+
+![](images/smoothstep_3.jpeg){width=88% height=100% fig-align="center"}
+
+:::
+
+
+:::{.fragment style="text-align: center; border: 1;"}
+
+$$ 
+\boxed{
+\partial_p^{i,j}(\alpha) = D_p(\mathcal{S}_i \circ f_\alpha) \circ \partial_p(K_\preceq) \circ D_{p+1}(\mathcal{S}_j \circ f_\alpha) 
+}
+$$ 
+
+:::
+
+:::{.fragment style="text-align: center;"}
+
+__Note__: $P^T \partial_p^{i,j}(\alpha) P$ has rank $= \mathrm{rank}(R_p^{i,j}(\alpha))$ for all $\alpha \in \mathbb{R}$. 
+
+:::
+
+:::{.aside style="text-align: center;"}
+Replacing $S \mapsto \mathcal{S}$ ensures continuity of $\partial_p^{i,j}(\alpha)$
+:::
+
+
+## Rank Invariances when $\mathbb{F} = \mathbb{R}$ {visibility="hidden"}
+
+::: {.fragment .fade-in style="text-align: left"}
+
+&emsp;&emsp;&emsp;&emsp;
+
+$\hspace{10em} \mathrm{rank}(A) \triangleq \mathrm{dim}(\mathrm{Im}(A))$
+
+::: 
+
+::: {.fragment .fade-in style="text-align: left"}
+
+$\hspace{10em}  \hphantom{\mathrm{rank}(A)} \equiv \mathrm{rank}(A^T) \quad \quad  \quad \text{(adjoint)}$
+
+:::
+
+::: {.fragment .fade-in style="text-align: left"}
+
+$\hspace{10em}  \hphantom{\mathrm{rank}(A)} \equiv \mathrm{rank}(A^T A) \quad \quad \; \text{(inner product)}$
+
+:::
+
+::: {.fragment .fade-in style="text-align: left"}
+
+$\hspace{10em}  \hphantom{\mathrm{rank}(A)} \equiv \mathrm{rank}(A A^T) \quad \quad \; \text{(outer product)}$
+
+:::
+
+::: {.fragment .fade-in style="text-align: left"}
+
+$\hspace{10em}  \hphantom{\mathrm{rank}(A)} \equiv \mathrm{rank}(S^{-1}AS) \quad \;  \text{(change of basis)}$
+
+:::
+
+::: {.fragment .fade-in style="text-align: left"}
+
+$\hspace{10em}  \hphantom{\mathrm{rank}(A)} \equiv \mathrm{rank}(P^T A P) \quad \; \text{(permutation)}$
+
+:::
+
+::: {.fragment .fade-in style="text-align: left"}
+
+$\hspace{10em}  \hphantom{\mathrm{rank}(A)} \equiv \dots  \quad \quad \quad \quad  \quad \quad  \! \! \text{(many others)}$
+
+:::
+
+<br> 
+
+::: {.fragment .fade-in style="text-align: left"}
+
+<div style="text-align: center; font-size: 35px;" >
+
+__Q: Can we exploit some of these to speed up the computation?__
+
+</div>
+
+:::

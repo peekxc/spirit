@@ -1,0 +1,42 @@
+## Application: Computing $\mathrm{dgm}$'s
+
+
+:::{layout="[[50,50]]" layout-valign="bottom"}
+
+![](images/divide_conquer_dgm.png){width=400 height=100% fig-align="right"}
+
+![](images/bisection_tree.png){width=400 height=100% fig-align="left"}
+
+:::
+
+:::{.fragment}
+
+<div style="padding-left: 1em; border: 1px solid black; margin: 0em; ">
+__Theorem [@chen2011output]__: For a simplicial complex $K$ of size $\lvert K \rvert = n$, computing the $\Gamma$-persistent pairs requires $O(C_{(1-\delta)\Gamma}\mathrm{R}(n) \log n)$ time and $O(n + \mathrm{R}(n))$ space, where $R(n)$ ($R_S(n)$) is the time (space) complexity of computing the rank of a $n \times n$ boundary matrix.
+</div>
+
+:::
+
+
+<!-- ## Conclusion 
+
+Spectral relaxation of rank invariant using _matrix functions_ 
+
+- Suitable for parameterized families of filtrations
+- Differentiable + amenable for optimization 
+- Stable to perturbations in $f_\alpha$ when $\tau > 0$ 
+- Excellent compute properties. Implementation ongoing. 
+- Better optimizer implementation also ongoing.  -->
+
+<!-- Looking for collaborators + ideas! In particular: -->
+
+<!-- :::{.incremental}
+
+- Optimizing parameterized filtrations
+- Differentiating n-parameter families of filtrations
+- Encoding features with Laplacian spectra
+- Sparse minimization problems (compressive sensing)
+- Understanding connections to other areas of math
+
+::: -->
+

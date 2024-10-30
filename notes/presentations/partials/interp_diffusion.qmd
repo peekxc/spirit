@@ -1,0 +1,96 @@
+
+## Interpretation: Diffusion
+
+<hr/>
+
+::: {.fragment fragment-index=1 style="text-align: center"}
+
+Diffusion processes on graphs often modeled as time-varying $v(t) \in \mathbb{R}^n$ via:
+
+$$ v'(t) = -L v(t) \quad \Leftrightarrow \quad L \cdot u(x,t) = - \frac{\partial u(x, t)}{\partial t} $$
+
+::: 
+
+::: {.fragment fragment-index=2 layout-valign="center" style="text-align: center"}
+
+![](images/diffusion2.png){width=90% fig-align="center"}
+
+:::
+
+::: {.fragment fragment-index=3 style="text-align: center"}
+
+Value of $v(t)$ at time $t$ given by the _Laplacian exponential diffusion kernel_:
+
+$$v(t) = \mathrm{exp}(-t L) v(0)$$
+
+<!-- $$H_t = U \mathrm{exp}(-t \Lambda) U' = \sum\limits_{i=1}^n e^{-t \lambda_i} \, u_i \, u_i^T$$ -->
+
+:::
+
+:::{.aside style="margin-top: 2em !important;"}
+
+Images from @crane2017heat and @sharma2011topologically
+
+::: 
+
+
+## Interpretation: Diffusion
+
+<hr/>
+
+::: {.fragment fragment-index=1}
+
+<div style="text-align: center;">
+
+Under the appropriate parameters for $\nu$ and $\rho$^[This $\phi$ corresponds to setting $\nu(\tau) = \tau$ and $p(x) = \mathrm{exp}(-x)$ for $x > 0$ and $p(x) = 0$ otherwise], $\phi$ takes the form:
+
+</div>
+
+$$
+\phi(x, \tau) = 1 - \mathrm{exp}(- x / \tau)
+$$
+
+:::
+
+
+::: {.fragment fragment-index=3}
+
+<div style="text-align: center;">
+
+The corresponding Löwner operator and its Schatten $1$-norm is given by (for $t = \tau^{-1}$):
+
+</div>
+
+$$
+\Phi_\tau(X) \simeq U \mathrm{exp}(-t \Lambda) U^T, \quad \mathrm{tr}(\Phi_\tau(X)) \simeq \sum\limits_{i = 1}^n \mathrm{exp}(-t \cdot \lambda_i)
+$$
+
+:::
+
+::: {.fragment fragment-index=4}
+
+<div style="text-align: center;">
+
+This is the <span style="color: red;"> _Heat kernel_ </span> and its Schatten-1 norm is the <span style="color: red;"> _heat kernel trace_ </span>
+
+</div>
+
+:::
+
+<br> 
+
+::: {.fragment fragment-index=5}
+
+<div style="text-align: center; border: 1px;">
+
+Both quantities proven useful in crafting _geometric signatures_$^2$
+
+</div>
+
+:::
+
+::: aside
+
+See e.g. @sun2009concise, @bronstein2010scale, and @xiao2009graph
+
+:::
