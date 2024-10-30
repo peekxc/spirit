@@ -388,7 +388,6 @@ struct GenericFilter {
   };
 };
 
-
 using combinatorial::BC; // use pre-allocated BC table
 
 // Enumerates the facets on the boundary of 'simplex'

@@ -164,6 +164,7 @@ def test_init_basics():
   assert np.allclose(er, pr)
   assert np.allclose(tr, qr)
 
+<<<<<<< HEAD
 def test_init_generic():
   X = np.random.uniform(size=(30,2))
   for eps in [sx.enclosing_radius(X), np.inf]:
@@ -197,6 +198,8 @@ def test_init_generic():
   # assert np.allclose(er, pr)
   # assert np.allclose(tr, qr)
 
+=======
+>>>>>>> dc4425e48ae6e5cdfe0ff5e35a9e35efc6d028cc
 def test_coboundary_gen():
   from itertools import product
   n = 16
