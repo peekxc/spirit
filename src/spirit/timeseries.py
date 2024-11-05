@@ -5,10 +5,22 @@ from numpy.typing import ArrayLike
 
 
 def sw_parameters(bounds: tuple, d: int = None, tau: float = None, w: float = None, L: int = None):
-	"""Computes slidding window parameters.
+	"""Computes sliding window parameters.
 
-	Given an interval [a,b] and any two slidding window parameters (d, w, tau, L),
+	Given an interval [a,b] and any two sliding window parameters (d, w, tau, L),
 	returns the necessary parameters (d, tau) needed to construct Takens slidding window embedding.
+
+	Parameters:
+		bounds = interval (a,b) over which the time series is observed
+		d = embedding dimension
+		tau = delay parameter
+		w = window width
+		L = number of periods in bounds
+
+	(d, tau) => (d, tau)
+	(d, w) =>   (d, w/d)
+	(d, L) => (b*d) / d * (L * (d + 1))
+
 	"""
 	if not (d is None) and not (tau is None):
 		return (d, tau)

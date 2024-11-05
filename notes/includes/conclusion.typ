@@ -2,7 +2,7 @@
 #import "../theorems.typ": *
 
 = Concluding Remarks and Limitations <sec:concluding-remarks>
-In summary, we have introduce various spectral relaxations of the persistent rank function, which has a wealth of interesting properties, including differentiability on the positive semi-definite cone, a matrix-free representation, and natural connections to variational approaches common in machine learning applications, such as the Tikhonov regularization and the Heat kernel. 
+In summary, we have introduce various spectral relaxations of the persistent rank function, which has a wealth of interesting properties, including differentiability on the positive semi-definite cone, a matrix-free representation, and natural connections to variational constructions common in machine learning applications, such as the Tikhonov regularization and the Heat kernel. 
 By focusing on coefficients in $bb(R)$, we were able to exploit the connection between the inner product spaces on cochain spaces and the theory of persistence measures, providing an avenue to introduce diffentiability to an otherwise discontinuous function. 
 Moreover, by focusing on the spectral characterization of the rank function, we were able to study persistence in the setting of _iterative methods_, a pursuit which lead us to the Lanczos method of Krylov expansion. 
 Surprisingly, these computational techniques turned out to pair well with the output-sensitive algorithm from @chen2011output, which we can use to compute either only $Gamma$-persistence pairs or the full diagram. As cycle representatives can be obtained once a pairing has been constructed, the iterative approach may be used to compute essentially any persistence invariant. 

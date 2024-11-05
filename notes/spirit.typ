@@ -28,7 +28,6 @@
 	#it 
 ]
 
-
 #show: arkheion.with(
   title: "Spectral relaxation of the persistence rank invariant",
   authors: (

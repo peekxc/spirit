@@ -22,7 +22,7 @@ def index_of(a: List[Hashable], b: List[Hashable], default: Any = None) -> List[
 
 def deflate_sparse(A: sparray, mask: np.ndarray = None, ind: bool = False, sort_ind: bool = False):
   """'Deflates' a given sparse array 'A' by removing it's rows and columns that are all zero.   
-  Returns a new sparse matrix with the same data but potentially diffferent shape. 
+  Returns a new sparse matrix with the same data but potentially different shape. 
   """
   from hirola import HashTable
   A = A if (hasattr(A, "row") and hasattr(A, "col") and hasattr(A, "data")) else A.tocoo()
@@ -94,19 +94,19 @@ def to_canonical(A: sparray, form: str = "csr"):
 		A.sum_duplicates()
 	return A
 
-  def tosparse(self):
-    # from scipy.sparse import dia_array
-    from scipy.sparse import dia_matrix
-    n, m = len(self.wp), len(self.wq)
-    WP = dia_matrix((np.array([self.wp]), [0]), shape=(n,n))
-    WQ = dia_matrix((np.array([self.wq]), [0]), shape=(m,m))
-    return WP @ self.D @ WQ @ self.D.T @ WP
-  
-  # TODO: to do this efficiently, really need a fast index remapper {0, 4, 5, 6, 6, 7} -> {0, 1, 2, 3, 3, 4}
-  # def lower_left(self, a: float, b: float):
-  #   """Partitions underlying boundary operator to reflect D[a:, :(b+1)]"""
-  #   np.argpartition()
-  #   self.wp >= a
+def tosparse(self):
+	# from scipy.sparse import dia_array
+	from scipy.sparse import dia_matrix
+	n, m = len(self.wp), len(self.wq)
+	WP = dia_matrix((np.array([self.wp]), [0]), shape=(n,n))
+	WQ = dia_matrix((np.array([self.wq]), [0]), shape=(m,m))
+	return WP @ self.D @ WQ @ self.D.T @ WP
+
+# TODO: to do this efficiently, really need a fast index remapper {0, 4, 5, 6, 6, 7} -> {0, 1, 2, 3, 3, 4}
+# def lower_left(self, a: float, b: float):
+#   """Partitions underlying boundary operator to reflect D[a:, :(b+1)]"""
+#   np.argpartition()
+#   self.wp >= a
 
 def boundary_matrix(p: int, p_simplices: np.ndarray, f_simplices: np.ndarray = [], dtype=np.int8, n: int = None):
   """
@@ -125,75 +125,6 @@ def boundary_matrix(p: int, p_simplices: np.ndarray, f_simplices: np.ndarray = [
   d, (ri,ci) = clique_mod.build_coo(n, p, p_simplices, f_simplices)
   D = coo_matrix((d, (ri,ci)), shape=(card_f, card_p), dtype=dtype)
   return D
-
-
-def deflate_sparse(A: sparray, mask: np.ndarray = None, ind: bool = False, sort_ind: bool = False):
-	"""'Deflates' a given sparse array 'A' by removing it's rows and columns that are all zero.
-	Returns a new sparse matrix with the same data but potentially diffferent shape."""
-	from hirola import HashTable
-
-	A = A if (hasattr(A, "row") and hasattr(A, "col") and hasattr(A, "data")) else A.tocoo()
-	hr = HashTable(1.25 * A.shape[0] + 16, A.row.dtype)
-	hc = HashTable(1.25 * A.shape[1] + 16, A.col.dtype)
-	non_zero = A.data != 0 if mask is None else mask
-	assert len(non_zero) == len(A.data), "Mask invalid! Must be length of data array."
-	r_nz = A.row[non_zero]
-	c_nz = A.col[non_zero]
-	d_nz = A.data[non_zero]
-	if sort_ind:
-		ri, ci = np.unique(r_nz), np.unique(c_nz)
-		hr.add(ri)
-		hc.add(ci)
-		A_deflated = coo_matrix((d_nz, (hr[r_nz], hc[c_nz])), shape=(hr.length, hc.length))  ## Use matrix for sksparse
-		A_deflated.eliminate_zeros()
-		return A_deflated if not (ind) else (A_deflated, ri, ci)
-	else:
-		hri = hr.add(r_nz)
-		hci = hc.add(c_nz)
-		A_deflated = coo_matrix((d_nz, (hri, hci)), shape=(hr.length, hc.length))
-		A_deflated.eliminate_zeros()
-		return A_deflated if not (ind) else (A_deflated, hr.keys, hc.keys)
-	# return A_deflated if not(ind) else (A_deflated, ri, ci)
-
-
-def compress_index(A: sparray, row_mask: np.ndarray, col_mask: np.ndarray, ind: bool = False):
-	"""Compresses a given sparse coo-matrix 'A' by keeping only the supplied row/column indices"""
-	from hirola import HashTable
-	from scipy.sparse import coo_matrix
-
-	A = A if (hasattr(A, "row") and hasattr(A, "col") and hasattr(A, "data")) else A.tocoo()
-	DP, (RI, CI) = clique_mod.compress_coo(row_mask, col_mask, A.row, A.col, A.data)
-	hr = HashTable(1.25 * len(RI) + 16, RI.dtype)
-	hc = HashTable(1.25 * len(CI) + 16, CI.dtype)
-	hri = hr.add(RI)
-	hci = hc.add(CI)
-	A_deflated = coo_matrix((DP, (hri, hci)), shape=(hr.length, hc.length))
-	A_deflated.eliminate_zeros()
-	return A_deflated if not (ind) else (A_deflated, hr.keys, hc.keys)
-
-	# TODO: to do this efficiently, really need a fast index remapper {0, 4, 5, 6, 6, 7} -> {0, 1, 2, 3, 3, 4}
-	# def lower_left(self, a: float, b: float):
-	#   """Partitions underlying boundary operator to reflect D[a:, :(b+1)]"""
-	#   np.argpartition()
-	#   self.wp >= a
-
-
-def boundary_matrix(p: int, p_simplices: np.ndarray, f_simplices: np.ndarray = [], dtype=np.int16, n: int = None):
-	"""
-	p = dimension of the p-simplices
-	p_simplices = colex ranks of the p-simplices
-	f_simplices = colex ranks of the (p-1)-simplices
-	"""
-	if p <= 0:
-		return coo_matrix((0, len(p_simplices)), dtype=dtype)
-	card_p, card_f = len(p_simplices), len(f_simplices)
-	if card_p == 0 or card_f == 0:
-		return coo_matrix((card_f, card_p), dtype=dtype)
-	n = np.max(rank_to_comb(np.max(p_simplices), order="colex", k=p + 1)) + 1 if n is None else n
-	d, (ri, ci) = clique_mod.build_coo(n, p, p_simplices, f_simplices)
-	D = coo_matrix((d, (ri, ci)), shape=(card_f, card_p), dtype=dtype)
-	return D
-
 
 class UpLaplacian(LinearOperator):
 	# def __init__(self, p: int, S: np.ndarray, F: np.ndarray, ws: np.ndarray = None, wf: np.ndarray = None):
@@ -793,7 +724,7 @@ class SpectralRI:
 			pairs = [(b + delta, c), (a + delta, c), (b + delta, d), (a + delta, d)]
 			ops = [self.lower_left(p, i, j) for i, j in pairs]
 			return ops
-			
+
 class SpectralRI:
   """Spectral-approximation of the persistent rank invariant. 
 
