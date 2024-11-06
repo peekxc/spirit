@@ -136,31 +136,50 @@ It's worth noting the results in @fig:ripser_vs_laplacian carry certain limitati
 
 == Shape comparison via featurization <sec:shape_comparison>
 
-While often used for homology inference, another historical applications of persistence is shape comparison in metric spaces#footnote[This is exemplified by size functions and pseudo-distances between curves]. 
-Indeed, in recent years, persistence has become increasingly integrated into machine learning pipelines through the use of mappings from diagrams to function spaces (e.g. Hilbert spaces), enabling the extraction of topologically-sensitive featurizations for downstream tasks. 
-One notable extension of this popular in shape analysis settings is the persistent homology transform (PHT) @turner2014persistent, an injective transform which filters a triangulated shape embedded in $bb(R)^d$ via its parameterized sublevel sets 
-// bipersistence-based approaches [@chazal2009gromov]. 
-However, despite their power, methods such as the PHT can be computationally prohibitive, driving the need for practical approximations that retain essential topological information.
-
-
-To demonstrate another application of our proposed spectral relaxation, we consider a simple shape classification problem on the MPEG7 shape data set. This dataset consists of 
-
-
-
-Context Sensitive Shape Similarity. 
-
-
-
-
+Analogous to its historical use in comparing shapes (i.e. manifolds, curves, etc.) through size functions, persistence has increasingly found use in machine learning pipelines through the use of mappings from diagrams to function spaces (e.g. Hilbert spaces).
+// enabling the extraction of topologically-sensitive featurizations for downstream tasks. 
+One notable such featurization is the persistent homology transform (PHT) @turner2014persistent, an injective transform which filters a triangulated space $cal(X)$ embedded in $bb(R)^d$ via the sublevel set parameterization $cal(X)(v)_r = {x in cal(X) : x dot v <= r }$, where $v in S^(d-1)$. The intuition here is that by "looking" at the sublevel-set persistence of the shape $cal(X)$ from all possible directions $v in S^1$, one can recover enough information to fully reconstruct $cal(X)$ from the collection of diagrams alone. 
 
 
 #figure([
 	#image("../images/mpeg7_heattrace.png", width: 65%)],
 	placement: top, 
   caption: [
-		Heat trace signatures generated from filtering combinatorial Laplacians of MPEG7 2D shape datasets using the directional transform. 
+		Spectral signatures generated from filtering combinatorial Laplacians of MPEG7 2D shape datasets using the directional transform. By using the relaxation from @eq:heat_sf, these signatures can be interpreted as combinations of heat traces over the interval $[0, 2 pi)$. Observe that highly similar shapes generate curves that maintain a large degree of intra-class similarity under the $ell_2$ norm whereas outliers are detected and retain dissimilarity between classes (e.g. the bent bone in the black class exhibits higher peaks in it signature compared to its class, but is highly class-similar.)
   ]
-)
+)<fig:mpeg7_curves>
+
+Aside from sparking an inverse theory for persistence, the injectivity of the PHT also provides the foundation necessary for equipping shape spaces with bona fide distance metrics. For example, one such metric is given by the integrated Wasserstein distance $op("dist")_(cal(X))$ between the sublevel-set persistence diagrams $dgm_p (X, v)$: 
+
+$ op("dist")_(cal(X)) (X, X') = sum_(p=0)^d integral_(S^(d-1)) d_W (dgm_p (X, v), dgm_p (X', v)) d v $
+
+where $X, X' in cal(X)$. In most machine learning applications, distance metrics are often difficult---if not intractable--to analytically determine; instead, most practitioners either craft or learn task-specific pseudometrics that are easy to compute and discriminative enough for the given application. 
+
+We seek to learn shape-sensitive, discriminative pseudometrics from weaker persistence invariants. Towards this end, for some fixed simplicial complex $K$ and pair $(a,b) in Delta_+$, consider the following parameterization over $S^(d-1)$: 
+
+$ beta_p^(a,b)( X, v) =  abs({ (a',b') in dgm_p (K, v) : a' <= a, b < b' }) $
+
+When $d = 2$, this is a piecewise-constant function which is periodic over the interval $[0, 2 pi)$. The collection of all such curves over $Delta_+$ characterizes all the information in PHT, thus it is a natural candidate hypothesis space for learning algorithms. However, some choices of pairs $(a,b) in Delta_+$ may yield functions which have little-to-no information (e.g. they are constant), suggesting that some choices of $(a,b) in Delta_+$ may be more useful than others for the purpose of classification. 
+
+To demonstrate another application of our methodology for shape classification, we apply our spectral relaxation to the MPEG-7 shape matching data set from @bai2009learning. 
+To build a classifier, we start by generating curves $cal(B)_(a,b) = { hat(beta)_p^(a,b)(K, v) }_(v in S^1)$
+for random choice $(a,b) in Delta_+$. These curves are used to build a hypothesis function $h_ast (x)$, for use in an ensemble model $H$: 
+
+$ H(x) = alpha_1 h_1 (x) + alpha_2 h_2 (x) + dots + alpha_t h_t (x) $
+
+To determine the coefficients $alpha_ast$, we use the classical AdaBoost method, sampling new hypothesis functions $h_ast$ randomly a bounded subset of $Delta_+$ with uniform probability. We choose the spectral relaxation $phi.alt (lambda, tau) = 1 - exp(-lambda slash tau)$ with a smoothing parameter $tau = 1 dot 10^(-1)$. Following @eq:heat_sf, the corresponding curves $cal(B)_(a,b)$ may be interpreted as combinations of _heat kernel traces_, which are known to be useful for characterizing graphs @xiao2009graph. 
+
+In @fig:mpeg7_curves, we plot the curves representing a hypothesis function generated for the ensemble classifier. Observe that highly similar shapes generate curves that maintain a large degree of intra-class similarity under the $ell_2$ norm whereas outliers are detected and retain dissimilarity between classes (e.g. the bent bone in the black class exhibits higher peaks in it signature compared to its class, but is highly class-similar.)
+
+// opt for a simple ensemble model using AdaBoost with the : 
+
+// $ H(K) = alpha_1 dot hat(beta)_p^(a_1,b_2)(K)$
+
+// Conceptually, our approach is to view the PHT as a vineyard, and then reinterpret the problem of constructing it as constructing $mu_p^R(K, f_v)$, for all $v in S^1$ and all $R subset Delta_+$ where . 
+// The theory from Chazal states that the rank function contains all the information about the diagram and vice-versa---thus, we may reconstruct 
+// However, despite their power, methods such as the PHT can be computationally prohibitive, driving the need for practical approximations that retain essential topological information.
+
+
 
 // === Manifold detection from image patches <manifold-detection-from-image-patches>
 // A common hypothesis is that high dimensional data tend to lie in the vicinity of an embedded, low dimensional manifold or topological space. An exemplary demonstration of this is given in the analysis by Lee et al. @lee2003nonlinear, who explored the space of high-contrast patches extracted from Hans van Hateren’s still image collection,#footnote[See #link("http://bethgelab.org/datasets/vanhateren/") for details on the image collection.] which consists of $approx 4 upright(",") 000$ monochrome images depicting various areas outside Groningen (Holland). Originally motivated by discerning whether there existed clear qualitative differences in the distributions of patches extracted from images of different modalities, such as optical and range images, Lee et al. @lee2003nonlinear were interested in exploring how high-contrast $3 times 3$ image patches were distributed in pixel-space with respect to predicted spaces and manifolds. Formally, they measured contrast using a discrete version of the scale-invariant Dirichlet semi-norm: $ norm(x)_D = sqrt(sum_(i tilde.op j) (x_i - x_j)^2) = sqrt(x^T D x) $ where $D$ is a fixed matrix whose quadratic form $x^T D x$ applied to an image $x in bb(R)^9$ is proportional to the sum of the differences between each pixels 4 connected neighbors (given above by the relation $i tilde.op j$). By mean-centering, contrast normalizing, and"whitening" the data via the Discrete Cosine Transform (DCT), they show a convenient basis for $D$ may be obtained via an expansion of 8 certain non-constant eigenvectors:

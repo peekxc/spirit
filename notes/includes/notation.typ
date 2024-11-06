@@ -36,6 +36,7 @@ Intuitively, when $cal(A) = bb(R)$, one can think of $alpha$ as a _time_ paramet
 
 - (Dynamic Metric Spaces) For a set $X$, let $gamma_X = lr((X , d_X lr((dot.op))))$ denote a dynamic metric space @kim2021spatiotemporal, where $d_X lr((dot.op)):bb(R) times X times X$ denotes a time-varying metric. For any fixed $K subset cal(P) (X)$, the pair $(K , f_alpha)$ obtained by setting $f_alpha (sigma) = max_(x , x prime in sigma) d_X (alpha) (x , x prime)$ recovers the notion of a #emph[time-varying Rips filtration].
 
-- (Interpolating filtrations) For $f,g: K -> bb(R)$ filters over $K$, a natural family of filtrations $(K , h_alpha)$ is obtained by $h_alpha = (1 - alpha) f + alpha g$ for all $alpha in lr([0 , 1])$, i.e. _convex combinations_ of $f$ and $g$. More generally, any homotopy $$ between filtrations may be used. 
+- (Interpolating filtrations) For $f,g: K -> bb(R)$ filters over $K$, a natural family of filtrations $(K , h_alpha)$ is obtained by choosing a homotopy $h : bb(R) times [0, 1] -> bb(R)$ satisfying $h_0 = f$ and $h_1  = g$.
+//  _convex combinations_ of $f$ and $g$ e.g. $h_alpha = (1 - alpha) f + alpha g$ for all $alpha in lr([0 , 1])$, i.e.. More generally, any homotopy $$ between filtrations may be used. 
 
-- (Fibered barcode) In the 2-parameter persistence setting, a common invariant is the fibered barcode, which induced by projecting a bifiltration to spaces of affine lines with strictly positive slope.
+- (Fibered barcode) For a 2-d persistence module $M$, a common invariant of interest is the _fibered barcode_, which is the collection of barcodes of $1$-d affine slices of $M$. These affine slices are themselves a 2-parameter family spanning the collection of lines in $bb(R)^2$ with non-negative slope.
